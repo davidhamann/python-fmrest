@@ -1,5 +1,6 @@
 venv/
 __pycache__/
+.cache/
 .DS_Store
 *.pyc
 *.egg-info
