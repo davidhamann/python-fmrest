@@ -1,2 +1,3 @@
 # python-fmrest
-Python wrapper around the FileMaker Data API
+
+Working on the first bits. Proper README coming as soon as it's usable.
