@@ -3,6 +3,7 @@ import json
 from .utils import request
 from .const import API_PATH
 from .exceptions import BadJSON, FileMakerError
+from .record import Record
 
 
 class Server(object):
@@ -21,9 +22,9 @@ class Server(object):
 
     def __init__(self, url, user,
                  password, database,
-                 layout, verifySSL=True):
+                 layout, verify_ssl=True):
         """Initialize the Server class.
-        
+
         Parameters
         ----------
         url : str
@@ -38,7 +39,7 @@ class Server(object):
             Name of database without extension, e.g. Contacts
         layout : str
             Target layout to access after login
-        verifySSL : bool, optional
+        verify_ssl : bool, optional
             Switch to set if certificate should be verified.
             Use False to disable verification. Default True.
         """
@@ -48,7 +49,7 @@ class Server(object):
         self.password = password
         self.database = database
         self.layout = layout
-        self.verifySSL = verifySSL
+        self.verify_ssl = verify_ssl
 
         self._token = None
         self._last_fm_error = None
@@ -84,8 +85,24 @@ class Server(object):
         return self.last_error == '0'
 
     def get_record(self, record_id):
-        #path = API_PATH['record_action'].format(database=self.database, layout=self.layout, record_id=record_id)
-        pass
+        """Fetches record with given ID and returns Record instance
+
+        Parameters
+        -----------
+        record_id : int
+            The FileMaker record id. Be aware that record ids CAN change (e.g. in cloned databases)
+        """
+        path = API_PATH['record_action'].format(
+            database=self.database,
+            layout=self.layout,
+            record_id=record_id
+        )
+        response = self._call_filemaker('GET', path)
+
+        data = response.json()
+        field_data = data['data'][0]['fieldData']
+
+        return Record(list(field_data), list(field_data.values()))
 
     @property
     def last_error(self):
@@ -124,7 +141,7 @@ class Server(object):
                            headers=self._headers,
                            url=url,
                            data=data,
-                           verify=self.verifySSL
+                           verify=self.verify_ssl
                           )
 
         try:

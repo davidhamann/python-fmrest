@@ -26,7 +26,7 @@ class ServerTestCase(unittest.TestCase):
                                   password=ACCOUNT_PASS,
                                   database=DATABASE,
                                   layout=LAYOUT,
-                                  verifySSL=False
+                                  verify_ssl=False
                                  )
     def test_login(self):
         """Test that login returns string token on success."""
@@ -37,7 +37,9 @@ class ServerTestCase(unittest.TestCase):
 
     def test_get_record(self):
         """Test that get_record returns a Record instance"""
-        self.assertIsInstance(self._fms.get_record(1), fmrest.Record)
+        with self._fms as server:
+            server.login()
+            self.assertIsInstance(self._fms.get_record(2), fmrest.record.Record)
 
     def test_non_ssl_handling(self):
         """Test that non-SSL call raises a FileMakerError exception
