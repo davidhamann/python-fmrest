@@ -25,4 +25,4 @@ def request(*args, **kwargs):
     try:
         return requests.request(*args, timeout=TIMEOUT, **kwargs)
     except Exception as ex:
-        raise RequestException(ex, args, kwargs)
+        raise RequestException(ex, args, kwargs) from None

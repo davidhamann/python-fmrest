@@ -42,7 +42,7 @@ class ResponseException(FMRestException):
             '{}, {} http response, content-type: {}'.format(
                 original_exception,
                 response.status_code,
-                response.headers.get(['content-type'], None))
+                response.headers.get('content-type', None))
         )
 
 class BadJSON(ResponseException):
