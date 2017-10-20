@@ -1,4 +1,4 @@
-"""FMServer test suite"""
+"""Server test suite"""
 import os
 import unittest
 import json
@@ -15,8 +15,9 @@ DATABASE = os.getenv('DATABASE', 'fmwrapper')
 LAYOUT = os.getenv('LAYOUT', 'fmwrapper')
 
 class ServerTestCase(unittest.TestCase):
+    """Server test suite"""
     def setUp(self):
-        
+
         # disable urlib warnings as we are testing with non verified certs
         requests.packages.urllib3.disable_warnings()
 
@@ -28,7 +29,7 @@ class ServerTestCase(unittest.TestCase):
                                   verifySSL=False
                                  )
     def test_login(self):
-        """Test that login returns string token on success and None for failure"""
+        """Test that login returns string token on success."""
         self.assertIsInstance(self._fms.login(), str)
 
     def test_logout(self):
@@ -38,9 +39,9 @@ class ServerTestCase(unittest.TestCase):
         pass
 
     def test_non_ssl_handling(self):
-        """Test that non-SSL call raise a FileMakerError exception
+        """Test that non-SSL call raises a FileMakerError exception
 
-        FileMaker returns no errorCode in this case, but only an error message
+        FileMaker Server returns no errorCode in this case, but only an error message
         """
 
         self._fms.url = self._fms.url.replace('https:', 'http:')
@@ -53,7 +54,7 @@ class ServerTestCase(unittest.TestCase):
 
     @mock.patch.object(requests, 'request')
     def test_last_error(self, mock_request):
-        """Test that FileMaker's errorCode response is available via last_fm_error method."""
+        """Test that FileMaker's errorCode response is available via last_error property."""
         mock_response = mock.Mock()
         mock_response.json.return_value = {"errorCode": "212"}
         mock_request.return_value = mock_response
@@ -77,49 +78,3 @@ class ServerTestCase(unittest.TestCase):
 
         with self.assertRaises(fmrest.exceptions.BadJSON):
             self._fms.login()
-
-
-"""
-TODO
-_fms.logout()
-
-# change layout
-_fms.layout = 'contacts'
-
-# manually provide token
-_fms.token = 'adadassd'
-
-# returns record instances:
-
-query = {'name': 'David'}
-portals = ['portal1', 'portal2']
-_fms.find(query=query)
-
-def find():
-    record_generator = (Record(row.keys, row.values) for row in rows)
-    results = Foundset(record_generator)
-
-    return results
-
-
-def cli():
-    pass
-
-if __name__ == '__main__':
-    cli()
-
-
-fmrest find <query>
-take user, pass etc. from env vars
----
-
-foundset = _fms.find()
-
-foundset.export('csv')
-foundset.export('df')
-foundset.export('json')
-...
-
-test for Record:
-    assert that key length equal value length
-"""
