@@ -38,7 +38,12 @@ class ResponseException(FMRestException):
             Response object of requests module
         """
         self.response = response
-        super().__init__('{}, {} http response'.format(original_exception, response.status_code))
+        super().__init__(
+            '{}, {} http response, content-type: {}'.format(
+                original_exception,
+                response.status_code,
+                response.headers['content-type'])
+        )
 
 class BadJSON(ResponseException):
     """Invalid json response"""
