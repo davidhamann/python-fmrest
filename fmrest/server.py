@@ -1,6 +1,6 @@
 """Server class for API connections"""
 import json
-from .utils import request
+from .utils import request, build_portal_param_string
 from .const import API_PATH
 from .exceptions import BadJSON, FileMakerError
 from .record import Record
@@ -84,23 +84,34 @@ class Server(object):
 
         return self.last_error == '0'
 
-    def get_record(self, record_id):
+    def get_record(self, record_id, portals=None):
         """Fetches record with given ID and returns Record instance
 
         Parameters
         -----------
         record_id : int
             The FileMaker record id. Be aware that record ids CAN change (e.g. in cloned databases)
+        portals : list
+            A list of dicts in format [{'name':'objectName', 'offset':1, 'range':50}]
+
+            Use this if you want to limit the amout of data returned. Offset and range are optional
+            with default values of 1 and 50, respectively.
+            All portals will be returned when portals==None. Default None.
         """
         path = API_PATH['record_action'].format(
             database=self.database,
             layout=self.layout,
             record_id=record_id
         )
-        response = self._call_filemaker('GET', path)
 
-        data = response.json()
-        field_data = data['data'][0]['fieldData']
+        params = build_portal_param_string(portals) if portals else None
+        response = self._call_filemaker('GET', path, params=params)
+
+        content = response.json()
+        data = content['data'][0] # TODO: add meta data like modId
+
+        field_data = data['fieldData']
+        portal_data = data['portalData'] # TODO: add portal data as Foundset to Record instance
 
         return Record(list(field_data), list(field_data.values()))
 
@@ -117,7 +128,7 @@ class Server(object):
             error = None
         return error
 
-    def _call_filemaker(self, method, path, data=None):
+    def _call_filemaker(self, method, path, data=None, params=None):
         """Calls a FileMaker Server Data API path
 
         Parameters
@@ -129,6 +140,9 @@ class Server(object):
         data : dict of str : str, optional
             Dict of parameter data for http request
             Can be None if API expects no data, e.g. for logout
+        params : dict of str : str, optional
+            Dict of get parameters for http request
+            Can be None if API expects no params
         """
 
         url = self.url + path
@@ -141,7 +155,8 @@ class Server(object):
                            headers=self._headers,
                            url=url,
                            data=data,
-                           verify=self.verify_ssl
+                           verify=self.verify_ssl,
+                           params=params
                           )
 
         try:

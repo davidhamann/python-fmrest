@@ -2,7 +2,7 @@ import unittest
 from fmrest.record import Record
 
 class RecordTestCase(unittest.TestCase):
-    """Server test suite"""
+    """Record test suite"""
     def setUp(self):
         pass
 

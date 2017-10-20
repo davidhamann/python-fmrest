@@ -12,7 +12,7 @@ URL = os.getenv('URL', 'https://192.168.1.20')
 ACCOUNT_NAME = os.getenv('ACCOUNT_NAME', 'admin')
 ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
 DATABASE = os.getenv('DATABASE', 'fmwrapper')
-LAYOUT = os.getenv('LAYOUT', 'fmwrapper')
+LAYOUT = os.getenv('LAYOUT', 'Contacts')
 
 class ServerTestCase(unittest.TestCase):
     """Server test suite"""
