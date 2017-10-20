@@ -36,7 +36,8 @@ class ServerTestCase(unittest.TestCase):
         pass
 
     def test_get_record(self):
-        pass
+        """Test that get_record returns a Record instance"""
+        self.assertIsInstance(self._fms.get_record(1), fmrest.Record)
 
     def test_non_ssl_handling(self):
         """Test that non-SSL call raises a FileMakerError exception

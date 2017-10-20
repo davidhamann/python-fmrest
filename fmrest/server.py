@@ -65,7 +65,7 @@ class Server(object):
             'layout': self.layout
         }
 
-        response = self._call_filemaker('POST', self._headers, path, data)
+        response = self._call_filemaker('POST', path, data)
 
         data = response.json()
         self._token = data.get('token', None)
@@ -79,10 +79,13 @@ class Server(object):
         Note: this method is also called by __exit__"""
 
         path = API_PATH['auth'].format(database=self.database)
-        headers = self._update_token_header()
-        self._call_filemaker('DELETE', headers, path)
+        self._call_filemaker('DELETE', path)
 
         return self.last_error == '0'
+
+    def get_record(self, record_id):
+        #path = API_PATH['record_action'].format(database=self.database, layout=self.layout, record_id=record_id)
+        pass
 
     @property
     def last_error(self):
@@ -97,15 +100,13 @@ class Server(object):
             error = None
         return error
 
-    def _call_filemaker(self, method, headers, path, data=None):
+    def _call_filemaker(self, method, path, data=None):
         """Calls a FileMaker Server Data API path
 
         Parameters
         -----------
         method : str
             The http request method, e.g. POST
-        headers : dict of str : str
-            Dict of http headers for the request
         path : str
             The API path, /fmi/rest/api/auth/my_solution
         data : dict of str : str, optional
@@ -116,8 +117,11 @@ class Server(object):
         url = self.url + path
         data = json.dumps(data) if data else None
 
+        # if we have a token, make sure it's included in the header
+        self._update_token_header()
+
         response = request(method=method,
-                           headers=headers,
+                           headers=self._headers,
                            url=url,
                            data=data,
                            verify=self.verifySSL
@@ -136,8 +140,9 @@ class Server(object):
         return response
 
     def _update_token_header(self):
-        """Update header to include access token for subsequent calls."""
-        self._headers['FM-Data-token'] = self._token
+        """Update header to include access token (if available) for subsequent calls."""
+        if self._token:
+            self._headers['FM-Data-token'] = self._token
         return self._headers
 
     def __enter__(self):
