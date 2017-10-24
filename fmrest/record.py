@@ -29,19 +29,18 @@ class Record(object):
         return self._values
 
     def __repr__(self):
-        return '<Record>' #TODO: show more info here
+        return '<Record id={}>'.format(self.recordId)
 
     def __getitem__(self, key):
         """Returns value for given key. For dict lookups, like my_id = record['id']."""
         keys = self.keys()
 
-        if key in keys:
+        try:
             index = keys.index(key)
             return self.values()[index]
-
-        raise KeyError(("No field named {}. Note that the Data API only returns fields "
-                        "placed on your FileMaker layout.").format(key))
-
+        except ValueError:
+            raise KeyError(("No field named {}. Note that the Data API only returns fields "
+                            "placed on your FileMaker layout.").format(key))
 
     def __getattr__(self, key):
         """Returns value for given key. For attribute lookups, like my_id = record.id.
@@ -51,4 +50,4 @@ class Record(object):
         try:
             return self[key]
         except KeyError as ex:
-            raise AttributeError(ex)
+            raise AttributeError(ex) from None

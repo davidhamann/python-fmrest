@@ -4,7 +4,7 @@ from .utils import request, build_portal_param_string
 from .const import API_PATH
 from .exceptions import BadJSON, FileMakerError
 from .record import Record
-
+from .foundset import Foundset
 
 class Server(object):
     """The server class provides easy access to the FileMaker Data API
@@ -108,12 +108,23 @@ class Server(object):
         response = self._call_filemaker('GET', path, params=params)
 
         content = response.json()
-        data = content['data'][0] # TODO: add meta data like modId
+        data = content['data'][0] # TODO: add meta data like recordId, modId
 
+        # get field data of the record
         field_data = data['fieldData']
-        portal_data = data['portalData'] # TODO: add portal data as Foundset to Record instance
+        keys = list(field_data)
+        values = list(field_data.values())
 
-        return Record(list(field_data), list(field_data.values()))
+        # get portal data of the record
+        portal_data = data['portalData']
+        for portal, foundset in portal_data.items():
+            keys.append('portal_' + portal)
+            # build generator of portal records
+            related_records = (Record(list(record), list(record.values())) for record in foundset)
+            # add portal foundset to record
+            values.append(Foundset(related_records))
+
+        return Record(keys, values)
 
     @property
     def last_error(self):

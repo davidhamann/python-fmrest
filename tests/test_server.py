@@ -8,7 +8,7 @@ import fmrest
 
 # Settings for fmrest test database
 # (if you want to change credentials when hosting the test db, please use the env vars to do so)
-URL = os.getenv('URL', 'https://192.168.1.20')
+URL = os.getenv('URL', 'https://10.211.55.15')
 ACCOUNT_NAME = os.getenv('ACCOUNT_NAME', 'admin')
 ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
 DATABASE = os.getenv('DATABASE', 'fmwrapper')
