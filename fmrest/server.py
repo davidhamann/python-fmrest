@@ -84,6 +84,30 @@ class Server(object):
 
         return self.last_error == '0'
 
+    def get_records(self, offset=1, range_=100, portals=None):
+        # TODO
+        pass
+
+    def create_record(self, field_data):
+        """Creates a new record with given field data and returns new internal record id.
+
+        Parameters
+        -----------
+        field_data : dict
+            Dict of field names as defined in FileMaker: E.g.: {'name': 'David', 'drink': 'Coffee' }
+        """
+        path = API_PATH['record'].format(
+            database=self.database,
+            layout=self.layout,
+        )
+
+        request_data = {'data': field_data}
+        response = self._call_filemaker('POST', path, request_data)
+        response_data = response.json()
+        record_id = response_data.get('recordId')
+
+        return record_id
+
     def get_record(self, record_id, portals=None):
         """Fetches record with given ID and returns Record instance
 
