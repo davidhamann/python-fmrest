@@ -64,3 +64,21 @@ def build_portal_param_string(portals):
         params['range.' + portal['name']] = portal.get('range', 50)
 
     return params
+
+def cache_generator(iterator, cache):
+    """Takes iterator and cache list, caches values before yielding them. Eventually flagging cache as complete.
+
+    Parameters
+    ----------
+    iterator : generator
+        Generator to consume
+    cache : list
+        List holding list of cached values and state of caching.
+        If cache[1] is True, all values have been cached.
+    """
+
+    for val in iterator:
+        cache[0].append(val)
+        yield val
+
+    cache[1] = True # all values have been cached

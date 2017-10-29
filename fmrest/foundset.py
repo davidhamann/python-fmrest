@@ -1,13 +1,17 @@
 """Foundset class for collections of Records"""
 
+import itertools
+from .utils import cache_generator
+
 class Foundset(object):
     """A set of Record instances
 
     Foundsets are used for both find results and portal data (related records)
     """
-
     def __init__(self, records):
         """Initialize the Foundset class.
+
+        The foundset is cached while being consumed, so that subsequent iterations are possible.
 
         Parameters
         ----------
@@ -16,30 +20,44 @@ class Foundset(object):
             related records from a portal.
         """
         self._records = records
-        self._records_fetched = [] # we will store each record in here once iterated over
-        self._all_fetched = False
+        self._consumed = False
+
+        # We hold the list of cached values and the state of completion in a list
+        # idea: https://codereview.stackexchange.com/a/178780/151724
+        self._cache = [[], False]
+
+        # cache_generator will yield the values and handle the caching
+        self._iter = cache_generator(self._records, self._cache)
 
     def __iter__(self):
-        """Make foundset iterable
+        """Make foundset iterable.
 
-        Return iter for list of records already fetched from generator, or self
-        to start/continue fetching from generator via __next__.
+        Returns iter for list of records already consumed from generator, or a chained object
+        of cache list plus still-to-consume records. This makes sure foundsets can be properly used
+        as a list.
         """
 
-        if self._all_fetched:
-            return iter(self._records_fetched)
+        if self._cache[1]:
+            # all values have been cached
+            return iter(self._cache[0])
 
-        return self
+        return itertools.chain(self._cache[0], self._iter)
 
-    def __next__(self):
-        """Fetch records from generator and cache them in list for potential later iterations"""
-        try:
-            record = next(self._records)
-            self._records_fetched.append(record)
-            return record
-        except StopIteration:
-            self._all_fetched = True
-            raise StopIteration("Reached end of foundset.")
+    def __getitem__(self, index):
+        """Return item at index in the iterator. If it's already cached, then return cached version.
+        Otherwise consume until found.
+
+        Parameters
+        ----------
+        index : int
+        """
+        while index >= len(self._cache[0]):
+            try:
+                next(self._iter)
+            except StopIteration:
+                break
+
+        return self._cache[0][index]
 
     def __repr__(self):
-        return '<Foundset fetched_records={}>'.format(len(self._records_fetched))
+        return '<Foundset fetched_records={}>'.format(len(self._cache[0]))

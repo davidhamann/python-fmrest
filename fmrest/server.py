@@ -119,7 +119,7 @@ class Server(object):
         portal_data = data['portalData']
         for portal, foundset in portal_data.items():
             keys.append('portal_' + portal)
-            # build generator of portal records
+            # delay creation of portal record instances by building generator
             related_records = (Record(list(record), list(record.values())) for record in foundset)
             # add portal foundset to record
             values.append(Foundset(related_records))
