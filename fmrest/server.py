@@ -126,6 +126,42 @@ class Server(object):
 
         return self.last_error == 0
 
+    def edit_record(self, record_id, field_data, mod_id=None):
+        """Edits the record with the given record_id and field_data. Return True on success.
+
+        Parameters
+        -----------
+        record_id : int
+            FileMaker's internal record id.
+        field_data: dict
+            Dict of field names as defined in FileMaker: E.g.: {'name': 'David', 'drink': 'Coffee'}
+
+            To delete related records, use {'deleteRelated': 'Orders.2'}, where 2 is the record id
+            of the related record.
+
+            To create a related record, use {'Orders::DeliveryTime.0':'3:07:55'}, where 0 stands for
+            the record id (i.e. new record). Use an exisiting record id to edit related values.
+
+            Note that only one related record can be created per call.
+        mod_id: int, optional
+            Pass a modification id to only edit the record when mod_id matches the current mod_id of
+            the server. This is only supported for records in the current table, not related
+            records.
+        """
+        path = API_PATH['record_action'].format(
+            database=self.database,
+            layout=self.layout,
+            record_id=record_id
+        )
+
+        request_data = {'data': field_data}
+        if mod_id:
+            request_data['modId'] = mod_id
+
+        self._call_filemaker('PUT', path, request_data)
+
+        return self.last_error == 0
+
     def get_record(self, record_id, portals=None):
         """Fetches record with given ID and returns Record instance
 

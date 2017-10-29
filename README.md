@@ -6,7 +6,7 @@ Working on the first bits. Proper README coming as soon as it's usable.
 - [x] record get
 - [x] record create
 - [x] record delete
-- [ ] record edit
+- [x] record edit
 - [ ] records get
 - [ ] find
 - [ ] globals
