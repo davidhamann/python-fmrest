@@ -4,12 +4,12 @@ Working on the first bits. Proper README coming as soon as it's usable.
 
 - [x] auth: login, logout
 - [x] record get
-- [] records get
-- [] record create
-- [] record delete
-- [] record edit
-- [] find
-- [] globals
+- [ ] records get
+- [ ] record create
+- [ ] record delete
+- [ ] record edit
+- [ ] find
+- [ ] globals
 
 ---
 
