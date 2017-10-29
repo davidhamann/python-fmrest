@@ -108,10 +108,17 @@ class Server(object):
         response = self._call_filemaker('GET', path, params=params)
 
         content = response.json()
-        data = content['data'][0] # TODO: add meta data like recordId, modId
+        data = content['data'][0]
 
-        # get field data of the record
+        # Get field data of the record
         field_data = data['fieldData']
+
+        # Add meta fields to record.
+        # TODO: this can clash with fields that have the same name. Find a better way (maybe prefix?).
+        # Note that portal foundsets have these fields included by default (without the related table prefix).
+        field_data['recordId'] = data.get('recordId')
+        field_data['modId'] = data.get('modId')
+
         keys = list(field_data)
         values = list(field_data.values())
 
