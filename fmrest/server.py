@@ -82,7 +82,7 @@ class Server(object):
         path = API_PATH['auth'].format(database=self.database)
         self._call_filemaker('DELETE', path)
 
-        return self.last_error == '0'
+        return self.last_error == 0
 
     def get_records(self, offset=1, range_=100, portals=None):
         # TODO
@@ -94,7 +94,7 @@ class Server(object):
         Parameters
         -----------
         field_data : dict
-            Dict of field names as defined in FileMaker: E.g.: {'name': 'David', 'drink': 'Coffee' }
+            Dict of field names as defined in FileMaker: E.g.: {'name': 'David', 'drink': 'Coffee'}
         """
         path = API_PATH['record'].format(
             database=self.database,
@@ -107,6 +107,24 @@ class Server(object):
         record_id = response_data.get('recordId')
 
         return record_id
+
+    def delete_record(self, record_id):
+        """Deletes a record for the given record_id. Returns True on success.
+
+        Parameters
+        -----------
+        record_id : int
+            FileMaker's internal record id.
+        """
+        path = API_PATH['record_action'].format(
+            database=self.database,
+            layout=self.layout,
+            record_id=record_id
+        )
+
+        self._call_filemaker('DELETE', path)
+
+        return self.last_error == 0
 
     def get_record(self, record_id, portals=None):
         """Fetches record with given ID and returns Record instance
