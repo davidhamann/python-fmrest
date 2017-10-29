@@ -5,7 +5,7 @@ Working on the first bits. Proper README coming as soon as it's usable.
 - [x] auth: login, logout
 - [x] record get
 - [x] record create
-- [ ] record delete
+- [x] record delete
 - [ ] record edit
 - [ ] records get
 - [ ] find
