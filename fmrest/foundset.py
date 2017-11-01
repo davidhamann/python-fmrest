@@ -60,4 +60,11 @@ class Foundset(object):
         return self._cache[0][index]
 
     def __repr__(self):
-        return '<Foundset fetched_records={}>'.format(len(self._cache[0]))
+        return '<Foundset fetched_records={} is_complete={}>'.format(
+            len(self._cache[0]), self.is_complete
+        )
+
+    @property
+    def is_complete(self):
+        """Returns True if all values have been consumed. Otherwise False."""
+        return self._cache[1]

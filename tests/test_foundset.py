@@ -11,9 +11,9 @@ class FoundsetTestCase(unittest.TestCase):
         """Test that values in generator are accesible via their index. Values are cached,
         so we are actually testing that we can access the cached list."""
         sample_gen = (record for record in [
-            Record(['name', 'recordId'], ['john doe', 1]),
-            Record(['name', 'recordId'], ['john smith', 2]),
-            Record(['name', 'recordId'], ['john wayne', 3])
+            Record(['name', 'recordId'], ['john doe', 1], True),
+            Record(['name', 'recordId'], ['john smith', 2], True),
+            Record(['name', 'recordId'], ['john wayne', 3], True)
         ])
         foundset = Foundset(sample_gen)
 

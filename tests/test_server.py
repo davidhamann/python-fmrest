@@ -41,6 +41,9 @@ class ServerTestCase(unittest.TestCase):
     def test_create_record(self):
         pass
 
+    def test_get_records(self):
+        pass
+
     def test_get_record(self):
         """Test that get_record returns a Record instance"""
         with self._fms as server:

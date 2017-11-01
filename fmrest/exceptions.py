@@ -18,9 +18,9 @@ class RequestException(FMRestException):
             Keyword args to the request function
         """
 
-        self.original_exception = original_exception
-        self.request_args = request_args
-        self.request_kwargs = request_kwargs
+        self._original_exception = original_exception
+        self._request_args = request_args
+        self._request_kwargs = request_kwargs
         super().__init__('Request error: {}'.format(original_exception))
 
 class ResponseException(FMRestException):
@@ -37,12 +37,12 @@ class ResponseException(FMRestException):
         response:
             Response object of requests module
         """
-        self.response = response
+        self._response = response
         super().__init__(
             '{}, {} http response, content-type: {}'.format(
                 original_exception,
-                response.status_code,
-                response.headers.get('content-type', None))
+                self._response.status_code,
+                self._response.headers.get('content-type', None))
         )
 
 class BadJSON(ResponseException):

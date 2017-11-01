@@ -9,7 +9,7 @@ from .foundset import Foundset
 class Server(object):
     """The server class provides easy access to the FileMaker Data API
 
-    Get an instance of this class:
+    Get an instance of this class, login, get a record, logout:
 
         import fmrest
         fms = fmrest.Server('https://server-address.com',
@@ -18,6 +18,15 @@ class Server(object):
                     database='db name',
                     layout='db layout'
                    )
+        fms.login()
+        fms.get_record(1)
+        fms.logout()
+
+    Or use as with statement, logging out automatically:
+
+        with fms as my_server:
+            my_server.login()
+            # do stuff
     """
 
     def __init__(self, url, user,
@@ -55,6 +64,17 @@ class Server(object):
         self._last_fm_error = None
         self._headers = {'Content-Type': 'application/json'}
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_traceback):
+        self.logout()
+
+    def __repr__(self):
+        return '<Server logged_in={} database={} layout={}>'.format(
+            bool(self._token), self.database, self.layout
+        )
+
     def login(self):
         """Logs into FMServer and returns access token."""
 
@@ -77,16 +97,13 @@ class Server(object):
     def logout(self):
         """Logs out of current session. Returns True if successful.
 
-        Note: this method is also called by __exit__"""
+        Note: this method is also called by __exit__
+        """
 
         path = API_PATH['auth'].format(database=self.database)
         self._call_filemaker('DELETE', path)
 
         return self.last_error == 0
-
-    def get_records(self, offset=1, range_=100, portals=None):
-        # TODO
-        pass
 
     def create_record(self, field_data):
         """Creates a new record with given field data and returns new internal record id.
@@ -107,24 +124,6 @@ class Server(object):
         record_id = response_data.get('recordId')
 
         return record_id
-
-    def delete_record(self, record_id):
-        """Deletes a record for the given record_id. Returns True on success.
-
-        Parameters
-        -----------
-        record_id : int
-            FileMaker's internal record id.
-        """
-        path = API_PATH['record_action'].format(
-            database=self.database,
-            layout=self.layout,
-            record_id=record_id
-        )
-
-        self._call_filemaker('DELETE', path)
-
-        return self.last_error == 0
 
     def edit_record(self, record_id, field_data, mod_id=None):
         """Edits the record with the given record_id and field_data. Return True on success.
@@ -162,6 +161,24 @@ class Server(object):
 
         return self.last_error == 0
 
+    def delete_record(self, record_id):
+        """Deletes a record for the given record_id. Returns True on success.
+
+        Parameters
+        -----------
+        record_id : int
+            FileMaker's internal record id.
+        """
+        path = API_PATH['record_action'].format(
+            database=self.database,
+            layout=self.layout,
+            record_id=record_id
+        )
+
+        self._call_filemaker('DELETE', path)
+
+        return self.last_error == 0
+
     def get_record(self, record_id, portals=None):
         """Fetches record with given ID and returns Record instance
 
@@ -185,31 +202,36 @@ class Server(object):
         params = build_portal_param_string(portals) if portals else None
         response = self._call_filemaker('GET', path, params=params)
 
-        content = response.json()
-        data = content['data'][0]
+        # pass response to foundset generator function. As we are only requesting one record though,
+        # we only re-use the code and immediately consume the first (and only) record via next().
+        return next(self._process_foundset_response(response))
 
-        # Get field data of the record
-        field_data = data['fieldData']
+    def get_records(self, offset=1, range_=100, portals=None):
+        """Requests all records in the given range, with given offset and returns result as
+        Foundset instance.
 
-        # Add meta fields to record.
-        # TODO: this can clash with fields that have the same name. Find a better way (maybe prefix?).
-        # Note that portal foundsets have these fields included by default (without the related table prefix).
-        field_data['recordId'] = data.get('recordId')
-        field_data['modId'] = data.get('modId')
+        Parameters
+        -----------
+        offset : int, optional
+            Offset for the query, starting at 1, default 1
+        range_ : int, optional
+            Limit the amount of returned records by providing a range. Defaults to 100
+        portals : list of dicts, optional
+            Define which portals you want to include in the result.
+            Example: [{'name':'objectName', 'offset':1, 'range':50}]
+            Defaults to None, which then returns all portals with default offset and range.
+        """
+        path = API_PATH['record'].format(
+            database=self.database,
+            layout=self.layout
+        )
 
-        keys = list(field_data)
-        values = list(field_data.values())
+        params = build_portal_param_string(portals) if portals else {}
+        params['offset'] = offset
+        params['range'] = range_
+        response = self._call_filemaker('GET', path, params=params)
 
-        # get portal data of the record
-        portal_data = data['portalData']
-        for portal, foundset in portal_data.items():
-            keys.append('portal_' + portal)
-            # delay creation of portal record instances by building generator
-            related_records = (Record(list(record), list(record.values())) for record in foundset)
-            # add portal foundset to record
-            values.append(Foundset(related_records))
-
-        return Record(keys, values)
+        return Foundset(self._process_foundset_response(response))
 
     @property
     def last_error(self):
@@ -273,11 +295,46 @@ class Server(object):
             self._headers['FM-Data-token'] = self._token
         return self._headers
 
-    def __enter__(self):
-        return self
+    def _process_foundset_response(self, response):
+        """Generator function that takes a response object, brings it into a Foundset/Record
+        structure and yields processed Records.
 
-    def __exit__(self, exc, val, traceback):
-        self.logout()
+        Lazily processing and yielding the results is slightly faster than building a list upfront
+        when you deal with big foundsets containing records that each have many portal records.
+        It won't save us much memory as we still hold the response, but initial processing time goes
+        down, and we only need to build the records when we actually use them.
+        (may think of another approach if it proves to be more pain than gain though)
 
-    def __repr__(self):
-        return '<Server logged_in={} database={}>'.format(bool(self._token), self.database)
+        Parameters
+        -----------
+        response : requests module response
+            HTTP response from the requests module
+        """
+        content = response.json()
+        data = content['data']
+
+        for record in data:
+            field_data = record['fieldData']
+
+            # Add meta fields to record.
+            # TODO: this can clash with fields that have the same name. Find a better
+            # way (maybe prefix?).
+            # Note that portal foundsets have the recordId field included by default
+            # (without the related table prefix).
+            field_data['recordId'] = record.get('recordId')
+            field_data['modId'] = record.get('modId')
+
+            keys = list(field_data)
+            values = list(field_data.values())
+
+            for portal, rows in record['portalData'].items():
+                keys.append('portal_' + portal)
+
+                # further delay creation of portal record instances
+                related_records = (
+                    Record(list(row), list(row.values()), in_portal=True) for row in rows
+                )
+                # add portal foundset to record
+                values.append(Foundset(related_records))
+
+            yield Record(keys, values)
