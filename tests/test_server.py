@@ -11,7 +11,7 @@ import fmrest
 URL = os.getenv('URL', 'https://10.211.55.15')
 ACCOUNT_NAME = os.getenv('ACCOUNT_NAME', 'admin')
 ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
-DATABASE = os.getenv('DATABASE', 'fmwrapper')
+DATABASE = os.getenv('DATABASE', 'Contacts')
 LAYOUT = os.getenv('LAYOUT', 'Contacts')
 
 class ServerTestCase(unittest.TestCase):

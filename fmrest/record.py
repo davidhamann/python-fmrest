@@ -1,9 +1,12 @@
 """Record class for FileMaker record responses"""
 
 class Record(object):
-    """A FileMaker record"""
+    """A FileMaker record representation.
 
-    def __init__(self, keys, values, in_portal=None):
+    (with ideas from: https://github.com/kennethreitz/records)
+    """
+
+    def __init__(self, keys, values, in_portal=False):
         """Initialize the Record class.
 
         Parameters
@@ -56,7 +59,7 @@ class Record(object):
         """Returns the internal record id.
 
         This is exposed as a method to reliably return the record id, even if the API might change
-        in the future.
+        the field name in the future.
         """
         return self.recordId
 
@@ -64,7 +67,7 @@ class Record(object):
         """Returns the internal modification id.
 
         This is exposed as a method to reliably return the modification id, even if the API might
-        change in the future.
+        change the field name in the future.
         """
         return None if self._in_portal else self.modId
 
