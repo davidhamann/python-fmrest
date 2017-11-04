@@ -72,7 +72,8 @@ def build_portal_params(portals, names_as_string=False):
     return params
 
 def cache_generator(iterator, cache):
-    """Takes iterator and cache list, caches values before yielding them. Eventually flagging cache as complete.
+    """Takes iterator and cache list, caches values before yielding them.
+    Eventually flagging cache as complete.
 
     Parameters
     ----------

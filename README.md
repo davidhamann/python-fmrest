@@ -9,7 +9,7 @@ This is very much a work in progress on getting the basic functionality up and r
 - [x] record edit
 - [x] records get
 - [x] find
-- [ ] globals
+- [x] globals
 
 ---
 

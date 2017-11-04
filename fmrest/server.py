@@ -123,7 +123,7 @@ class Server(object):
         response_data = response.json()
         record_id = response_data.get('recordId')
 
-        return record_id
+        return int(record_id)
 
     def edit_record(self, record_id, field_data, mod_id=None):
         """Edits the record with the given record_id and field_data. Return True on success.

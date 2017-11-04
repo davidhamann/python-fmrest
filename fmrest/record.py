@@ -61,7 +61,7 @@ class Record(object):
         This is exposed as a method to reliably return the record id, even if the API might change
         the field name in the future.
         """
-        return self.recordId
+        return int(self.recordId)
 
     def modification_id(self):
         """Returns the internal modification id.
@@ -69,7 +69,7 @@ class Record(object):
         This is exposed as a method to reliably return the modification id, even if the API might
         change the field name in the future.
         """
-        return None if self._in_portal else self.modId
+        return None if self._in_portal else int(self.modId)
 
     def keys(self):
         """Returns all keys of this record."""

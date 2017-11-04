@@ -1,21 +1,21 @@
 """Server test suite"""
-import os
 import unittest
 import json
 import mock
 import requests
 import fmrest
 
-# Settings for fmrest test database
-# (if you want to change credentials when hosting the test db, please use the env vars to do so)
-URL = os.getenv('URL', 'https://10.211.55.15')
-ACCOUNT_NAME = os.getenv('ACCOUNT_NAME', 'admin')
-ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
-DATABASE = os.getenv('DATABASE', 'Contacts')
-LAYOUT = os.getenv('LAYOUT', 'Contacts')
+URL = 'https://111.111.111.111'
+ACCOUNT_NAME = 'demo'
+ACCOUNT_PASS = 'demo'
+DATABASE = 'Demo'
+LAYOUT = 'Demo'
 
 class ServerTestCase(unittest.TestCase):
-    """Server test suite"""
+    """Server test suite.
+
+    Only put mocked requests here that don't need an actual FileMaker Server.
+    """
     def setUp(self):
 
         # disable urlib warnings as we are testing with non verified certs
@@ -25,44 +25,8 @@ class ServerTestCase(unittest.TestCase):
                                   user=ACCOUNT_NAME,
                                   password=ACCOUNT_PASS,
                                   database=DATABASE,
-                                  layout=LAYOUT,
-                                  verify_ssl=False
+                                  layout=LAYOUT
                                  )
-    def test_login(self):
-        """Test that login returns string token on success."""
-        self.assertIsInstance(self._fms.login(), str)
-
-    def test_logout(self):
-        pass
-
-    def test_delete_record(self):
-        pass
-
-    def test_create_record(self):
-        pass
-
-    def test_get_records(self):
-        pass
-
-    def test_get_record(self):
-        """Test that get_record returns a Record instance"""
-        with self._fms as server:
-            server.login()
-            self.assertIsInstance(self._fms.get_record(2), fmrest.record.Record)
-
-    def test_non_ssl_handling(self):
-        """Test that non-SSL call raises a FileMakerError exception
-
-        FileMaker Server returns no errorCode in this case, but only an error message
-        """
-
-        self._fms.url = self._fms.url.replace('https:', 'http:')
-        with self.assertRaises(fmrest.exceptions.FileMakerError):
-            self._fms.login()
-
-    # --------------
-    # Mocked requests
-    # --------------
 
     @mock.patch.object(requests, 'request')
     def test_last_error(self, mock_request):
