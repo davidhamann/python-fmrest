@@ -1,6 +1,6 @@
 """Server class for API connections"""
 import json
-from .utils import request, build_portal_param_string
+from .utils import request, build_portal_params
 from .const import API_PATH
 from .exceptions import BadJSON, FileMakerError
 from .record import Record
@@ -202,7 +202,7 @@ class Server(object):
             record_id=record_id
         )
 
-        params = build_portal_param_string(portals) if portals else None
+        params = build_portal_params(portals, True) if portals else None
         response = self._call_filemaker('GET', path, params=params)
 
         # pass response to foundset generator function. As we are only requesting one record though,
@@ -229,10 +229,56 @@ class Server(object):
             layout=self.layout
         )
 
-        params = build_portal_param_string(portals) if portals else {}
+        params = build_portal_params(portals, True) if portals else {}
         params['offset'] = offset
         params['range'] = range_
         response = self._call_filemaker('GET', path, params=params)
+
+        return Foundset(self._process_foundset_response(response))
+
+    def find(self, query, sort=None, offset=1, range_=100, portals=None):
+        """Finds all records matching query and returns result as a Foundset instance.
+
+        Parameters
+        -----------
+        query : list of dicts
+            A list of find queries, specified as 'field_name': 'field_value'
+            Example:
+                [{'drink': 'Coffee'}, {'drink': 'Dr. Pepper'}] will find matches for either Coffee
+                or Dr. Pepper.
+
+                You can also negate find requests by adding a key "omit" with value "true".
+
+                Generally, all FileMaker Pro operators are supported. So, wildcard finds with "*" or
+                exact matches with "==" should all work like in Pro.
+        sort : list of dicts, optional
+            A list of sort criteria. Example:
+                [{'fieldName': 'name', 'sortOrder': 'descend'}]
+        offset : int, optional
+            Offset for the query, starting at 1, default 1
+        range_ : int, optional
+            Limit the amount of returned records by providing a range. Defaults to 100
+        portals : list of dicts, optional
+            Define which portals you want to include in the result.
+            Example: [{'name':'objectName', 'offset':1, 'range':50}]
+            Defaults to None, which then returns all portals with default offset and range.
+        """
+        path = API_PATH['find'].format(
+            database=self.database,
+            layout=self.layout
+        )
+
+        portal_params = build_portal_params(portals) if portals else None
+
+        data = {
+            'query': query,
+            'sort': sort,
+            'range': str(range_),
+            'offset': str(offset),
+            'portal': portal_params
+        }
+
+        response = self._call_filemaker('POST', path, data=data)
 
         return Foundset(self._process_foundset_response(response))
 

@@ -6,7 +6,7 @@ class UtilsTestCase(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_portal_param_string(self):
+    def test_portal_params(self):
         """Test that portal param string is build correctly."""
         portals = [
             {
@@ -21,9 +21,18 @@ class UtilsTestCase(unittest.TestCase):
             }
         ]
 
-        params = build_portal_param_string(portals)
+        params = build_portal_params(portals, names_as_string=True)
         self.assertEqual(
             {'portal': '["Portal1", "Portal2"]',
+             'offset.Portal1': 1,
+             'range.Portal1': 50,
+             'offset.Portal2': 2,
+             'range.Portal2': 51},
+            params)
+
+        params = build_portal_params(portals)
+        self.assertEqual(
+            {'portal': ["Portal1", "Portal2"],
              'offset.Portal1': 1,
              'range.Portal1': 50,
              'offset.Portal2': 2,
