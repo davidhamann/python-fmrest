@@ -147,6 +147,9 @@ class Server(object):
             the server. This is only supported for records in the current table, not related
             records.
         """
+        # TODO: Woud be nice to be able to pass a record instance, then edit it and write the changes back to the server.
+        # This would give a much cleaner interface.
+
         path = API_PATH['record_action'].format(
             database=self.database,
             layout=self.layout,
