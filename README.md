@@ -8,7 +8,7 @@ This is very much a work in progress on getting the basic functionality up and r
 - [x] record delete
 - [x] record edit
 - [x] records get
-- [ ] find
+- [x] find
 - [ ] globals
 
 ---
