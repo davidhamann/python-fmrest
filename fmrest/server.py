@@ -282,6 +282,27 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response))
 
+    def set_globals(self, globals_):
+        """Set global fields for the currently active session. Returns True on success.
+
+        Global fields do not need to be placed on the layout and can be used for establishing
+        relationships of which the global is a match field.
+
+        Parameters
+        -----------
+        globals_ : dict
+            Dict of { field name : value }
+        """
+        path = API_PATH['global'].format(
+            database=self.database,
+            layout=self.layout
+        )
+
+        data = {'globalFields': globals_}
+
+        self._call_filemaker('PUT', path, data=data)
+        return self.last_error == 0
+
     @property
     def last_error(self):
         """Returns last error number returned by FileMaker Server as int.
