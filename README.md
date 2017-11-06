@@ -43,7 +43,13 @@ Questions/problems? Open a [new issue](https://github.com/davidhamann/python-fmr
 
 You need Python 3 and FileMaker Server/Cloud 16 (below there is no Data API 😎)
 
-For now, install it like this:
+At the current stage, you can install it like this (preferrably in a [virtualenv](https://virtualenv.pypa.io/en/stable/)):
+
+```
+pip install python-fmrest-master.zip
+```
+
+Or manually:
 
 ```
 python setup.py install
