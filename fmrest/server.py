@@ -125,6 +125,11 @@ class Server(object):
 
         return int(record_id)
 
+    def edit(self, record, validate_mod_id=False):
+        """Shortcut to edit_record method. Takes (modified) record instance and calls edit_record"""
+        mod_id = record.modification_id if validate_mod_id else None
+        return self.edit_record(record.record_id, record.modifications(), mod_id)
+
     def edit_record(self, record_id, field_data, mod_id=None):
         """Edits the record with the given record_id and field_data. Return True on success.
 

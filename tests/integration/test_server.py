@@ -49,7 +49,7 @@ class ServerTestCase(unittest.TestCase):
 
             #read the new record and compare the written value
             record = server.get_record(record_id)
-            self.assertEqual(record.record_id(), record_id)
+            self.assertEqual(record.record_id, record_id)
             self.assertEqual(record.name, 'FileMaker サーバ')
 
             #delete record by the ID
