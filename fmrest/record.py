@@ -1,5 +1,8 @@
 """Record class for FileMaker record responses"""
 
+from .utils import convert_string_type
+from .const import PORTAL_PREFIX
+
 class Record(object):
     """A FileMaker record representation.
 
@@ -7,7 +10,7 @@ class Record(object):
     """
     __slots__ = ('_keys', '_values', '_in_portal', '_modifications')
 
-    def __init__(self, keys, values, in_portal=False):
+    def __init__(self, keys, values, in_portal=False, type_conversion=False):
         """Initialize the Record class.
 
         Parameters
@@ -20,10 +23,23 @@ class Record(object):
             If true, this record instance describes a related record from a portal. This is a
             special case as portal records are treated differently by the Data API and don't get
             all standard keys (modId is missing).
+        type_conversion : bool, optional
+            If True, attempt to convert string values into their potential original types.
+            FileMaker Data API always returns strings and there is no way of knowing the correct
+            type of a requested field value. Be cautious with this parameter!
+            Values will be converted into int, float, datetime, timedelta, string.
         """
 
         self._keys = keys
-        self._values = values
+
+        if type_conversion:
+            self._values = []
+            for value in values:
+                parsed = convert_string_type(value) if isinstance(value, str) else value
+                self._values.append(parsed)
+        else:
+            self._values = values
+
         self._in_portal = in_portal
         self._modifications = {}
 
@@ -69,7 +85,7 @@ class Record(object):
             # all others are handled here
             if key not in self.keys():
                 raise KeyError(str(key) + " is not a valid field name.")
-            elif key.startswith('portal_'):
+            elif key.startswith(PORTAL_PREFIX):
                 raise KeyError(
                     ("Portal data cannot be set through the record instance. "
                      "To edit portal data, build a dict and pass it to edit_records().")
@@ -131,3 +147,11 @@ class Record(object):
     def values(self):
         """Returns all values of this record."""
         return self._values
+
+    def to_dict(self, ignore_portals=False):
+        """Returns record values as dictionary of key: val."""
+        zipped = zip(self.keys(), self.values())
+
+        if ignore_portals:
+            return {k:v for k, v in zipped if not k.startswith(PORTAL_PREFIX)}
+        return dict(zipped)

@@ -89,3 +89,51 @@ def cache_generator(iterator, cache):
         yield val
 
     cache[1] = True # all values have been cached
+
+def convert_string_type(value):
+    """Quick and dirty way to convert strings into their (guessed) original type.
+
+    FileMaker Data API only returns strings. Hopefully, we can throw this function away as
+    soon as the Data API is out of beta :-)
+
+    Not used when running fmrest with default parameters as returned values can
+    be unexpected.
+    """
+
+    # int
+    try:
+        return int(value)
+    except ValueError:
+        pass
+
+    # float
+    try:
+        return float(value)
+    except ValueError:
+        pass
+
+    # datetime / timedelta
+    try:
+        from dateutil.parser import parse
+        from datetime import timedelta
+        parsed = parse(value)
+        if '/' not in value:
+            #assume time, as FM always returns / for date and ts, and parse didn't raise ValueError
+            parsed = timedelta(hours=parsed.hour, minutes=parsed.minute, seconds=parsed.second)
+        return parsed
+    except ValueError:
+        pass
+
+    # timedelta (above try will fail for >24h)
+    time_split = value.split(':')
+    if len(time_split) == 3:
+        try:
+            hours = int(time_split[0])
+            minutes = int(time_split[1])
+            seconds = int(time_split[2])
+            return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        except ValueError:
+            pass
+
+    # fall back to string
+    return value

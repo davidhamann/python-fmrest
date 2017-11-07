@@ -1,7 +1,9 @@
 """Server class for API connections"""
 import json
+import importlib
+import warnings
 from .utils import request, build_portal_params
-from .const import API_PATH
+from .const import API_PATH, PORTAL_PREFIX
 from .exceptions import BadJSON, FileMakerError
 from .record import Record
 from .foundset import Foundset
@@ -30,8 +32,8 @@ class Server(object):
     """
 
     def __init__(self, url, user,
-                 password, database,
-                 layout, verify_ssl=True):
+                 password, database, layout,
+                 verify_ssl=True, type_conversion=False):
         """Initialize the Server class.
 
         Parameters
@@ -51,6 +53,15 @@ class Server(object):
         verify_ssl : bool, optional
             Switch to set if certificate should be verified.
             Use False to disable verification. Default True.
+        type_conversion : bool, optional
+            If True, attempt to convert string values into their potential original types.
+            FileMaker Data API always returns strings and there is no way of knowing the correct
+            type of a requested field value.
+
+            Be cautious with this parameter, as results may be different from what you expect!
+
+            Values will be converted into int, float, datetime, timedelta, string. This happens
+            on a record level, not on a foundset level.
         """
 
         self.url = url
@@ -59,6 +70,11 @@ class Server(object):
         self.database = database
         self.layout = layout
         self.verify_ssl = verify_ssl
+
+        self.type_conversion = type_conversion
+        if type_conversion and not importlib.util.find_spec("dateutil"):
+            warnings.warn('Turning on type_conversion needs the dateutil module, which '
+                          'does not seem to be present on your system.')
 
         self._token = None
         self._last_fm_error = None
@@ -403,13 +419,15 @@ class Server(object):
             values = list(field_data.values())
 
             for portal, rows in record['portalData'].items():
-                keys.append('portal_' + portal)
+                keys.append(PORTAL_PREFIX + portal)
 
                 # further delay creation of portal record instances
                 related_records = (
-                    Record(list(row), list(row.values()), in_portal=True) for row in rows
+                    Record(list(row), list(row.values()),
+                           in_portal=True, type_conversion=self.type_conversion
+                          ) for row in rows
                 )
                 # add portal foundset to record
                 values.append(Foundset(related_records))
 
-            yield Record(keys, values)
+            yield Record(keys, values, type_conversion=self.type_conversion)

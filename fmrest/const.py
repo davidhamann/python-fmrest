@@ -4,6 +4,7 @@ from pkg_resources import get_distribution
 
 __version__ = get_distribution('python-fmrest').version
 
+PORTAL_PREFIX = 'portal_'
 TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
 
 API_PATH = {

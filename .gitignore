@@ -8,3 +8,5 @@ __pycache__/
 *.swo
 scratch/
 .ipynb_checkpoints/
+build/
+dist/

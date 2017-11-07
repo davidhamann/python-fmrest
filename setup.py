@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='python-fmrest',
-    version='0.1.0',
+    version='0.2.0',
     author='David Hamann',
     author_email='dh@davidhamann.de',
     packages=['fmrest'],

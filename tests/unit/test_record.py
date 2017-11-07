@@ -99,3 +99,25 @@ class RecordTestCase(unittest.TestCase):
 
         with self.assertRaises(KeyError):
             record['portal_notes'] = 1234
+
+    def test_dict_conversion(self):
+        """Test that a record can be converted into a dict structure."""
+        record = Record(
+            ['name', 'drink', 'city', 'portal_notes', 'portal_addresses'],
+            ['David', 'Coffee', 'Hamburg', 'dummy', 'dummy2']
+        )
+
+        fake_dict = {
+            'name': 'David',
+            'drink': 'Coffee',
+            'city': 'Hamburg',
+            'portal_notes': 'dummy',
+            'portal_addresses': 'dummy2'
+        }
+
+        self.assertEqual(record.to_dict(), fake_dict)
+
+        # test without portals
+        fake_dict.pop('portal_notes')
+        fake_dict.pop('portal_addresses')
+        self.assertEqual(record.to_dict(ignore_portals=True), fake_dict)

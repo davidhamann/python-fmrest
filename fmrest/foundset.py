@@ -68,3 +68,22 @@ class Foundset(object):
     def is_complete(self):
         """Returns True if all values have been consumed. Otherwise False."""
         return self._cache[1]
+
+
+
+    def to_df(self):
+        """Returns a Pandas DataFrame of the Foundset. Must have Pandas installed.
+
+        Note that portal data is not returned as part of the DataFrame.
+        """
+        try:
+            import pandas as pd
+        except ImportError as ex:
+            raise Exception(
+                "You need to have Pandas installed to use this feature. "
+                "You can install it like this: 'pip install pandas'"
+            ) from ex
+
+        return pd.DataFrame(
+            [r.to_dict(ignore_portals=True) for r in self]
+        )
