@@ -60,7 +60,7 @@ class Foundset(object):
         return self._cache[0][index]
 
     def __repr__(self):
-        return '<Foundset fetched_records={} is_complete={}>'.format(
+        return '<Foundset consumed_records={} is_complete={}>'.format(
             len(self._cache[0]), self.is_complete
         )
 
