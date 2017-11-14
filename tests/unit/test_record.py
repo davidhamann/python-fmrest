@@ -103,14 +103,16 @@ class RecordTestCase(unittest.TestCase):
     def test_dict_conversion(self):
         """Test that a record can be converted into a dict structure."""
         record = Record(
-            ['name', 'drink', 'city', 'portal_notes', 'portal_addresses'],
-            ['David', 'Coffee', 'Hamburg', 'dummy', 'dummy2']
+            ['name', 'drink', 'city', 'recordId', 'modId', 'portal_notes', 'portal_addresses'],
+            ['David', 'Coffee', 'Hamburg', 1, 2, 'dummy', 'dummy2']
         )
 
         fake_dict = {
             'name': 'David',
             'drink': 'Coffee',
             'city': 'Hamburg',
+            'recordId': 1,
+            'modId': 2,
             'portal_notes': 'dummy',
             'portal_addresses': 'dummy2'
         }
@@ -121,3 +123,19 @@ class RecordTestCase(unittest.TestCase):
         fake_dict.pop('portal_notes')
         fake_dict.pop('portal_addresses')
         self.assertEqual(record.to_dict(ignore_portals=True), fake_dict)
+
+        # test without internal ids
+        fake_dict.pop('recordId')
+        fake_dict.pop('modId')
+        self.assertEqual(record.to_dict(ignore_portals=True, ignore_internal_ids=True), fake_dict)
+
+    def test_pop_values(self):
+        """Test that we can pop values from the record."""
+
+        record = Record(['name', 'drink', 'city'], ['David', 'Coffee', 'Hamburg'])
+
+        self.assertEqual(record.pop('drink'), 'Coffee')
+        self.assertEqual(record.keys(), ['name', 'city'])
+        self.assertEqual(record.values(), ['David', 'Hamburg'])
+
+        self.assertEqual(record.pop('not existing'), None)

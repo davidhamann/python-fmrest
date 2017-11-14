@@ -56,6 +56,17 @@ class ServerTestCase(unittest.TestCase):
             deleted = server.delete_record(record_id)
             self.assertTrue(deleted)
 
+    def test_create_record_from_record_instance(self):
+        """Create a record from a new record instance."""
+
+        record = Record(['name', 'drink'], ['David', 'Coffee'])
+
+        with self._fms as server:
+            server.login()
+            record_id = server.create(record)
+
+        self.assertIsInstance(record_id, int)
+
     def test_get_records(self):
         pass
 
@@ -64,6 +75,26 @@ class ServerTestCase(unittest.TestCase):
 
     def test_edit_record(self):
         pass
+
+    def test_duplicate_by_get_create(self):
+        """Test that we can pass a record instance from get_record directly to create().
+
+        Note that this might not be a practical application in real life, as duplicating
+        a record like this will only work if you have no ID fields, calc fields, etc. in your
+        record instance.
+        """
+
+        with self._fms as server:
+            server.layout = 'Planets' # different test layout with no IDs / calcs
+            server.login()
+            record = server.get_record(5)
+
+            # duplicate record by passing rec instance to create method
+            duplicated_record_id = server.create(record)
+            self.assertIsInstance(duplicated_record_id, int)
+
+            # delete test record
+            server.delete_record(duplicated_record_id)
 
     def test_set_globals_to_access_related_values(self):
         """Test that we can set a global value in the current session and then

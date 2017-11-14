@@ -121,6 +121,11 @@ class Server(object):
 
         return self.last_error == 0
 
+    def create(self, record):
+        """Shortcut to create_record method. Takes record instance and calls create_record."""
+        # TODO: support for handling foundset instances inside record instance
+        return self.create_record(record.to_dict(ignore_portals=True, ignore_internal_ids=True))
+
     def create_record(self, field_data):
         """Creates a new record with given field data and returns new internal record id.
 

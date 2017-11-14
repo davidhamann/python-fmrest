@@ -148,10 +148,29 @@ class Record(object):
         """Returns all values of this record."""
         return self._values
 
-    def to_dict(self, ignore_portals=False):
+    def to_dict(self, ignore_portals=False, ignore_internal_ids=False):
         """Returns record values as dictionary of key: val."""
         zipped = zip(self.keys(), self.values())
 
         if ignore_portals:
-            return {k:v for k, v in zipped if not k.startswith(PORTAL_PREFIX)}
-        return dict(zipped)
+            out = {k:v for k, v in zipped if not k.startswith(PORTAL_PREFIX)}
+        else:
+            out = dict(zipped)
+
+        if ignore_internal_ids:
+            out.pop('recordId', None)
+            out.pop('modId', None)
+        return out
+
+    def pop(self, key, default=None):
+        """Pops the record's key. Returns key's value or default."""
+        keys = self.keys()
+
+        try:
+            value = self[key]
+            index = keys.index(key)
+            self._keys.pop(index)
+            self._values.pop(index)
+            return value
+        except (KeyError, ValueError):
+            return default
