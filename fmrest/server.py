@@ -4,7 +4,7 @@ import importlib
 import warnings
 from .utils import request, build_portal_params
 from .const import API_PATH, PORTAL_PREFIX
-from .exceptions import BadJSON, FileMakerError
+from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
 from .foundset import Foundset
 
@@ -186,6 +186,15 @@ class Server(object):
         self._call_filemaker('PUT', path, request_data)
 
         return self.last_error == 0
+
+    def delete(self, record):
+        """Shortcut to delete_record method. Takes record instance and calls delete_record."""
+        try:
+            record_id = record.record_id
+        except AttributeError:
+            raise RecordError('Not a valid record instance. record_id is missing.') from None
+
+        return self.delete_record(record_id)
 
     def delete_record(self, record_id):
         """Deletes a record for the given record_id. Returns True on success.

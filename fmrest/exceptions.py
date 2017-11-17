@@ -53,3 +53,6 @@ class FileMakerError(FMRestException):
 
     def __init__(self, error_code, error_message):
         super().__init__('FileMaker Server returned error {}, {}'.format(error_code, error_message))
+
+class RecordError(FMRestException):
+    """Error with the local Record instance."""

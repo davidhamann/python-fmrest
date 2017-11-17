@@ -4,6 +4,7 @@ import unittest
 import requests
 import fmrest
 from fmrest.record import Record
+from fmrest.exceptions import RecordError
 
 # Settings for fmrest test database 'Contacts'
 # Running theses tests requires you to have a FileMaker Server running
@@ -75,6 +76,25 @@ class ServerTestCase(unittest.TestCase):
 
     def test_edit_record(self):
         pass
+
+    def test_delete_record_instance(self):
+        with self._fms as server:
+            server.login()
+
+            # create dummy record
+            record = Record(['name'], ['David'])
+            new_record_id = server.create(record)
+
+            # "hand-made" record not fetched from server should fail for deletion
+            with self.assertRaises(RecordError):
+                server.delete(record)
+
+            # fetch record from server so that we have a valid record instance
+            record = server.get_record(new_record_id)
+
+            # test deletion
+            deletion_result = server.delete(record)
+            self.assertTrue(deletion_result)
 
     def test_duplicate_by_get_create(self):
         """Test that we can pass a record instance from get_record directly to create().
