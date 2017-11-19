@@ -90,6 +90,18 @@ def cache_generator(iterator, cache):
 
     cache[1] = True # all values have been cached
 
+def filename_from_url(url):
+    """Returns filename from given remote container url."""
+
+    # remove query string
+    url = url.split('?')[0]
+
+    # get last part of url. FileMaker Data API does not always include the file extension
+    # (e.g. for non audio/image/video) so we cannot rely on matching for a filename with extension
+    filename = url.split('/')[-1]
+
+    return filename
+
 def convert_string_type(value):
     """Quick and dirty way to convert strings into their (guessed) original type.
 

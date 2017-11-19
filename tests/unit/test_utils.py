@@ -93,3 +93,24 @@ class UtilsTestCase(unittest.TestCase):
             convert_string_type('no. 42'),
             str
         )
+
+    def test_filename_from_url(self):
+        """Test that we can extract the file name from a FM RC URL."""
+
+        # filename without extension
+        filename = '7124058BDBFC7C4BB82331184A3C72BC4EB0C449FCF35DBA295B3A448FD142EB'
+        self.assertEqual(
+            filename_from_url(
+                'https://10.211.55.15/Streaming_SSL/MainDB/'
+                '7124058BDBFC7C4BB82331184A3C72BC4EB0C449FCF35DBA295B3A448FD142EB'
+                '?RCType=EmbeddedRCFileProcessor'),
+            filename)
+
+        # filename with extension
+        filename = '6DE110C449E23F7C196F87CC062046A7BE48927BBEB90F5B0A4BFA809A249075.mp4'
+        self.assertEqual(
+            filename_from_url(
+                'https://10.211.55.15/Streaming_SSL/MainDB/'
+                '6DE110C449E23F7C196F87CC062046A7BE48927BBEB90F5B0A4BFA809A249075.mp4'
+                '?RCType=EmbeddedRCFileProcessor'),
+            filename)

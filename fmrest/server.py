@@ -2,7 +2,7 @@
 import json
 import importlib
 import warnings
-from .utils import request, build_portal_params
+from .utils import request, build_portal_params, filename_from_url
 from .const import API_PATH, PORTAL_PREFIX
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
@@ -313,6 +313,41 @@ class Server(object):
         response = self._call_filemaker('POST', path, data=data)
 
         return Foundset(self._process_foundset_response(response))
+
+    def fetch_file(self, file_url, stream=False):
+        """Fetches the file from the given url.
+
+        Returns a tuple of filename (unique identifier), content type (e.g. image/png), length,
+        and a requests response object. You can access contents by response.content.
+
+        Example:
+            url = record.container_field
+            name, type_, length, content = fms.fetch_file(url)
+
+        Parameters
+        -----------
+        file_url : str
+            URL to file as returned by FMS.
+            Example:
+            https://address/Streaming_SSL/MainDB/unique-identifier.png?RCType=EmbeddedRCFileProcessor
+        stream : bool, optional
+            Set this to True if you don't want the file to immediately be loaded into memory.
+            This let's you decide how you want to handle large files before downloading them.
+            Access to headers is given before downloading.
+            If you are not consuming all data, make sure to close the connection after use by
+            calling response.close().
+        """
+        name = filename_from_url(file_url)
+        response = request(method='get',
+                           url=file_url,
+                           verify=self.verify_ssl,
+                           stream=stream
+                          )
+
+        return (name,
+                response.headers.get('Content-Type'),
+                response.headers.get('Content-Length'),
+                response)
 
     def set_globals(self, globals_):
         """Set global fields for the currently active session. Returns True on success.
