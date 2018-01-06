@@ -112,17 +112,12 @@ def convert_string_type(value):
     be unexpected.
     """
 
-    # int
-    try:
-        return int(value)
-    except ValueError:
-        pass
-
-    # float
-    try:
-        return float(value)
-    except ValueError:
-        pass
+    # int and float
+    for type_ in int, float:
+        try:
+            return type_(value)
+        except ValueError:
+            pass
 
     # datetime / timedelta
     try:
