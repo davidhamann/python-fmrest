@@ -49,7 +49,8 @@ class Server(object):
         database : str
             Name of database without extension, e.g. Contacts
         layout : str
-            Target layout to access after login
+            Layout to work with. Can be changed between calls by setting the layout attribute again,
+            e.g.: fmrest_instance.layout = 'new_layout'.
         verify_ssl : bool, optional
             Switch to set if certificate should be verified.
             Use False to disable verification. Default True.
@@ -92,21 +93,21 @@ class Server(object):
         )
 
     def login(self):
-        """Logs into FMServer and returns access token."""
+        """Logs into FMServer and returns access token.
+
+        Authentication happens via HTTP Basic Auth. Subsequent calls to the API will then use
+        the return session token.
+
+        Note that OAuth is currently not supported.
+        """
 
         path = API_PATH['auth'].format(database=self.database)
-        data = {
-            'user': self.user,
-            'password': self.password,
-            'database': self.database,
-            'layout': self.layout
-        }
+        data = {} # http body must have a value, even if it's {}
 
-        response = self._call_filemaker('POST', path, data)
+        response = self._call_filemaker('POST', path, data, auth=(self.user, self.password))
 
-        data = response.json()
+        data = response.json().get('response')
         self._token = data.get('token', None)
-        self.layout = data.get('layout', None) # in case fms returns a diff layout than passed
 
         return self._token
 
@@ -383,7 +384,7 @@ class Server(object):
             error = None
         return error
 
-    def _call_filemaker(self, method, path, data=None, params=None):
+    def _call_filemaker(self, method, path, data=None, params=None, **kwargs):
         """Calls a FileMaker Server Data API path
 
         Parameters
@@ -398,6 +399,9 @@ class Server(object):
         params : dict of str : str, optional
             Dict of get parameters for http request
             Can be None if API expects no params
+        auth : tuple of str, str, optional
+            Tuple containing user and password for HTTP basic
+            auth
         """
 
         url = self.url + path
@@ -411,18 +415,20 @@ class Server(object):
                            url=url,
                            data=data,
                            verify=self.verify_ssl,
-                           params=params
+                           params=params,
+                           **kwargs
                           )
 
         try:
             response_data = response.json()
+            messages = response_data.get('messages')
         except json.decoder.JSONDecodeError as ex:
             raise BadJSON(ex, response) from None
 
-        self._last_fm_error = response_data.get('errorCode', -1)
+        self._last_fm_error = messages[0].get('code', -1)
         if self.last_error != 0:
             raise FileMakerError(self._last_fm_error,
-                                 response_data.get('errorMessage', 'Unkown error'))
+                                 messages[0].get('message', 'Unkown error'))
 
         return response
 

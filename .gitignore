@@ -10,3 +10,4 @@ scratch/
 .ipynb_checkpoints/
 build/
 dist/
+tags

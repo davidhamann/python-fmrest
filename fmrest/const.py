@@ -8,9 +8,9 @@ PORTAL_PREFIX = 'portal_'
 TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
 
 API_PATH = {
-    'auth':             '/fmi/rest/api/auth/{database}',
-    'record':           '/fmi/rest/api/record/{database}/{layout}',
-    'record_action':    '/fmi/rest/api/record/{database}/{layout}/{record_id}',
-    'find':             '/fmi/rest/api/find/{database}/{layout}',
-    'global':           '/fmi/rest/api/global/{database}/{layout}'
+    'auth':             '/fmi/data/v1/databases/{database}/sessions',
+    'record':           '/fmi/data/v1/api/record/{database}/{layout}',
+    'record_action':    '/fmi/data/v1/api/record/{database}/{layout}/{record_id}',
+    'find':             '/fmi/data/v1/api/find/{database}/{layout}',
+    'global':           '/fmi/data/v1/api/global/{database}/{layout}'
 }
