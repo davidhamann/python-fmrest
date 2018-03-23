@@ -225,9 +225,9 @@ class Server(object):
         record_id : int
             The FileMaker record id. Be aware that record ids CAN change (e.g. in cloned databases)
         portals : list
-            A list of dicts in format [{'name':'objectName', 'offset':1, 'range':50}]
+            A list of dicts in format [{'name':'objectName', 'offset':1, 'limit':50}]
 
-            Use this if you want to limit the amout of data returned. Offset and range are optional
+            Use this if you want to limit the amout of data returned. Offset and limit are optional
             with default values of 1 and 50, respectively.
             All portals will be returned when portals==None. Default None.
         """
@@ -461,8 +461,7 @@ class Server(object):
         response : requests module response
             HTTP response from the requests module
         """
-        content = response.json()
-        data = content['data']
+        data = response['data']
 
         for record in data:
             field_data = record['fieldData']

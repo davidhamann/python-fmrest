@@ -28,28 +28,28 @@ def request(*args, **kwargs):
         raise RequestException(ex, args, kwargs) from None
 
 def build_portal_params(portals, names_as_string=False):
-    """Takes a list of dicts and returns a dict in a format as FMServer expects it
+    """Takes a list of dicts and returns a dict in a format as FMServer expects it.
 
     FMS expects portals and their options to be specified in the following format:
-        portal=["Portal1", "Portal2"]&offset.Portal1=1&range.Portal1=10
+        portal=["Portal1", "Portal2"]&_offset.Portal1=1&_limit.Portal1=10
 
     This function will return a dict of params suitable for the requests module.
 
     Parameters
     -----------
     portals : list
-        List of dicts with keys name, offset, range
+        List of dicts with keys name, offset, limit
         Example:
             [
                 {
                     'name': 'addressPortal', # FM object name of portal
                     'offset': 1,
-                    'range': 50
+                    'limit': 50
                 },
                 {
                     'name': 'notesPortal',
                     'offset': 1,
-                    'range': 50
+                    'limit': 50
                 }
             ]
     names_as_string : bool
@@ -66,8 +66,8 @@ def build_portal_params(portals, names_as_string=False):
         params = {'portal': portal_selector}
 
     for portal in portals:
-        params['offset.' + portal['name']] = portal.get('offset', 1)
-        params['range.' + portal['name']] = portal.get('range', 50)
+        params['_offset.' + portal['name']] = portal.get('offset', 1)
+        params['_limit.' + portal['name']] = portal.get('limit', 50)
 
     return params
 
