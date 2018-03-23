@@ -277,7 +277,7 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response))
 
-    def find(self, query, sort=None, offset=1, range_=100, portals=None):
+    def find(self, query, sort=None, offset=1, limit=100, portals=None):
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -297,12 +297,12 @@ class Server(object):
                 [{'fieldName': 'name', 'sortOrder': 'descend'}]
         offset : int, optional
             Offset for the query, starting at 1, default 1
-        range_ : int, optional
-            Limit the amount of returned records by providing a range. Defaults to 100
+        limit : int, optional
+            Limit the amount of returned records. Defaults to 100
         portals : list of dicts, optional
             Define which portals you want to include in the result.
-            Example: [{'name':'objectName', 'offset':1, 'range':50}]
-            Defaults to None, which then returns all portals with default offset and range.
+            Example: [{'name':'objectName', 'offset':1, 'limit':50}]
+            Defaults to None, which then returns all portals with default offset and limit.
         """
         path = API_PATH['find'].format(
             database=self.database,
@@ -314,10 +314,13 @@ class Server(object):
         data = {
             'query': query,
             'sort': sort,
-            'range': str(range_),
+            'limit': str(limit),
             'offset': str(offset),
             'portal': portal_params
         }
+
+        # FM Data API from v17 cannot handle null values, so we remove all Nones from data
+        data = {k:v for k, v in data.items() if v is not None}
 
         response = self._call_filemaker('POST', path, data=data)
 
