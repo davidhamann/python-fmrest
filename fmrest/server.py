@@ -244,20 +244,23 @@ class Server(object):
         # we only re-use the code and immediately consume the first (and only) record via next().
         return next(self._process_foundset_response(response))
 
-    def get_records(self, offset=1, range_=100, portals=None):
-        """Requests all records in the given range, with given offset and returns result as
-        Foundset instance.
+    def get_records(self, offset=1, limit=100, sort=None, portals=None):
+        """Requests all records with given offset and limit and returns result as
+        (sorted) Foundset instance.
 
         Parameters
         -----------
         offset : int, optional
             Offset for the query, starting at 1, default 1
-        range_ : int, optional
-            Limit the amount of returned records by providing a range. Defaults to 100
+        limit : int, optional
+            Limit the amount of returned records. Defaults to 100
+        sort : list of dicts, optional
+            A list of sort criteria. Example:
+                [{'fieldName': 'name', 'sortOrder': 'descend'}]
         portals : list of dicts, optional
             Define which portals you want to include in the result.
-            Example: [{'name':'objectName', 'offset':1, 'range':50}]
-            Defaults to None, which then returns all portals with default offset and range.
+            Example: [{'name':'objectName', 'offset':1, 'limit':50}]
+            Defaults to None, which then returns all portals with default offset and limit.
         """
         path = API_PATH['record'].format(
             database=self.database,
@@ -265,8 +268,11 @@ class Server(object):
         )
 
         params = build_portal_params(portals, True) if portals else {}
-        params['offset'] = offset
-        params['range'] = range_
+        params['_offset'] = offset
+        params['_limit'] = limit
+
+        if sort:
+            params['_sort'] = json.dumps(sort)
         response = self._call_filemaker('GET', path, params=params)
 
         return Foundset(self._process_foundset_response(response))
