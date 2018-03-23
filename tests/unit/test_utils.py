@@ -13,31 +13,31 @@ class UtilsTestCase(unittest.TestCase):
             {
                 'name': 'Portal1',
                 'offset': 1,
-                'range': 50
+                'limit': 50
             },
             {
                 'name': 'Portal2',
                 'offset': 2,
-                'range': 51
+                'limit': 51
             }
         ]
 
         params = build_portal_params(portals, names_as_string=True)
         self.assertEqual(
             {'portal': '["Portal1", "Portal2"]',
-             'offset.Portal1': 1,
-             'range.Portal1': 50,
-             'offset.Portal2': 2,
-             'range.Portal2': 51},
+             '_offset.Portal1': 1,
+             '_limit.Portal1': 50,
+             '_offset.Portal2': 2,
+             '_limit.Portal2': 51},
             params)
 
         params = build_portal_params(portals)
         self.assertEqual(
             {'portal': ["Portal1", "Portal2"],
-             'offset.Portal1': 1,
-             'range.Portal1': 50,
-             'offset.Portal2': 2,
-             'range.Portal2': 51},
+             '_offset.Portal1': 1,
+             '_limit.Portal1': 50,
+             '_offset.Portal2': 2,
+             '_limit.Portal2': 51},
             params)
 
     def test_string_to_time_conversion(self):

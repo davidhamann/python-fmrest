@@ -32,7 +32,7 @@ class ServerTestCase(unittest.TestCase):
     def test_last_error(self, mock_request):
         """Test that FileMaker's errorCode response is available via last_error property."""
         mock_response = mock.Mock()
-        mock_response.json.return_value = {"errorCode": "212"}
+        mock_response.json.return_value = {"messages": [{"code": "212"}]}
         mock_request.return_value = mock_response
 
         # Error should be None when no request has been made yet
@@ -54,3 +54,14 @@ class ServerTestCase(unittest.TestCase):
 
         with self.assertRaises(fmrest.exceptions.BadJSON):
             self._fms.login()
+
+    def test_non_ssl_handling(self):
+        """Make sure you cannot instantiate a Server with an http address."""
+
+        with self.assertRaises(ValueError):
+            fmrest.Server(url="http://127.0.0.1",
+                          user=ACCOUNT_NAME,
+                          password=ACCOUNT_PASS,
+                          database=DATABASE,
+                          layout=LAYOUT
+                         )

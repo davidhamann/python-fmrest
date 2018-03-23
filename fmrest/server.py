@@ -77,6 +77,10 @@ class Server(object):
             warnings.warn('Turning on type_conversion needs the dateutil module, which '
                           'does not seem to be present on your system.')
 
+        if url[:5] != 'https':
+            raise ValueError('Please make sure to use https, otherwise calls to the Data '
+                             'API will not work.')
+
         self._token = None
         self._last_fm_error = None
         self._headers = {'Content-Type': 'application/json'}
@@ -422,7 +426,6 @@ class Server(object):
 	# if not, the Authorization header gets removed (necessary for example for logout)
         self._update_token_header()
 
-        print(method, path, self._headers)
         response = request(method=method,
                            headers=self._headers,
                            url=url,

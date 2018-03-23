@@ -125,7 +125,7 @@ class ServerTestCase(unittest.TestCase):
             server.login()
 
             # give the global field the value of an existing note record
-            globals_ = {'g_note_id_active': '1'}
+            globals_ = {'Contacts::g_note_id_active': '1'}
             set_globals = server.set_globals(globals_)
             self.assertTrue(set_globals)
 
@@ -144,13 +144,3 @@ class ServerTestCase(unittest.TestCase):
             record = server.get_record(1)
             self.assertEqual(fake_record.name, record.name)
             self.assertEqual(fake_record.drink, record.drink)
-
-    def test_non_ssl_handling(self):
-        """Test that non-SSL call raises a FileMakerError exception
-
-        FileMaker Server returns no errorCode in this case, but only an error message
-        """
-
-        self._fms.url = self._fms.url.replace('https:', 'http:')
-        with self.assertRaises(fmrest.exceptions.FileMakerError):
-            self._fms.login()
