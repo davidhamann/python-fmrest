@@ -371,15 +371,15 @@ class Server(object):
         -----------
         globals_ : dict
             Dict of { field name : value }
+            Note that field names must be fully qualified, i.e. contain the TO name
+            Example:
+                { 'Table::myField': 'whatever' }
         """
-        path = API_PATH['global'].format(
-            database=self.database,
-            layout=self.layout
-        )
+        path = API_PATH['global'].format(database=self.database)
 
         data = {'globalFields': globals_}
 
-        self._call_filemaker('PUT', path, data=data)
+        self._call_filemaker('PATCH', path, data=data)
         return self.last_error == 0
 
     @property

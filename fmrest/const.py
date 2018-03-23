@@ -12,5 +12,5 @@ API_PATH = {
     'record':           '/fmi/data/v1/databases/{database}/layouts/{layout}/records',
     'record_action':    '/fmi/data/v1/databases/{database}/layouts/{layout}/records/{record_id}',
     'find':             '/fmi/data/v1/databases/{database}/layouts/{layout}/_find',
-    'global':           '/fmi/data/v1/api/global/{database}/{layout}'
+    'global':           '/fmi/data/v1/databases/{database}/globals'
 }
