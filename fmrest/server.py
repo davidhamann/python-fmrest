@@ -182,11 +182,11 @@ class Server(object):
             record_id=record_id
         )
 
-        request_data = {'data': field_data}
+        request_data = {'fieldData': field_data}
         if mod_id:
             request_data['modId'] = mod_id
 
-        self._call_filemaker('PUT', path, request_data)
+        self._call_filemaker('PATCH', path, request_data)
 
         return self.last_error == 0
 
