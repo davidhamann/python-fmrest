@@ -9,7 +9,7 @@ TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
 
 API_PATH = {
     'auth':             '/fmi/data/v1/databases/{database}/sessions/{token}',
-    'record':           '/fmi/data/v1/api/record/{database}/{layout}',
+    'record':           '/fmi/data/v1/databases/{database}/layouts/{layout}/records',
     'record_action':    '/fmi/data/v1/api/record/{database}/{layout}/{record_id}',
     'find':             '/fmi/data/v1/api/find/{database}/{layout}',
     'global':           '/fmi/data/v1/api/global/{database}/{layout}'

@@ -105,9 +105,7 @@ class Server(object):
         data = {} # http body must have a value, even if it's {}
 
         response = self._call_filemaker('POST', path, data, auth=(self.user, self.password))
-
-        data = response.json().get('response')
-        self._token = data.get('token', None)
+        self._token = response.get('token', None)
 
         return self._token
 
@@ -145,10 +143,9 @@ class Server(object):
             layout=self.layout,
         )
 
-        request_data = {'data': field_data}
+        request_data = {'fieldData': field_data}
         response = self._call_filemaker('POST', path, request_data)
-        response_data = response.json()
-        record_id = response_data.get('recordId')
+        record_id = response.get('recordId')
 
         return int(record_id)
 
@@ -390,7 +387,7 @@ class Server(object):
         return error
 
     def _call_filemaker(self, method, path, data=None, params=None, **kwargs):
-        """Calls a FileMaker Server Data API path
+        """Calls a FileMaker Server Data API path and returns the parsed fms response data
 
         Parameters
         -----------
@@ -416,6 +413,7 @@ class Server(object):
 	# if not, the Authorization header gets removed (necessary for example for logout)
         self._update_token_header()
 
+        print(method, path, self._headers)
         response = request(method=method,
                            headers=self._headers,
                            url=url,
@@ -427,21 +425,23 @@ class Server(object):
 
         try:
             response_data = response.json()
-            messages = response_data.get('messages')
         except json.decoder.JSONDecodeError as ex:
             raise BadJSON(ex, response) from None
 
-        self._last_fm_error = messages[0].get('code', -1)
+        fms_messages = response_data.get('messages')
+        fms_response = response_data.get('response')
+
+        self._last_fm_error = fms_messages[0].get('code', -1)
         if self.last_error != 0:
             raise FileMakerError(self._last_fm_error,
-                                 messages[0].get('message', 'Unkown error'))
+                                 fms_messages[0].get('message', 'Unkown error'))
 
-        return response
+        return fms_response
 
     def _update_token_header(self):
         """Update header to include access token (if available) for subsequent calls."""
         if self._token:
-            self._headers['Authorization'] = self._token
+            self._headers['Authorization'] = 'Bearer ' + self._token
         else:
             self._headers.pop('Authorization', None)
         return self._headers
