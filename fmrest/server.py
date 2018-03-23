@@ -101,7 +101,7 @@ class Server(object):
         Note that OAuth is currently not supported.
         """
 
-        path = API_PATH['auth'].format(database=self.database)
+        path = API_PATH['auth'].format(database=self.database, token='')
         data = {} # http body must have a value, even if it's {}
 
         response = self._call_filemaker('POST', path, data, auth=(self.user, self.password))
@@ -117,7 +117,12 @@ class Server(object):
         Note: this method is also called by __exit__
         """
 
-        path = API_PATH['auth'].format(database=self.database)
+	# token is expected in endpoint for logout
+        path = API_PATH['auth'].format(database=self.database, token=self._token)
+
+	# remove token, so that the Authorization header is not sent for logout
+	# (_call_filemaker() will update the headers)
+        self._token = ''
         self._call_filemaker('DELETE', path)
 
         return self.last_error == 0
@@ -408,6 +413,7 @@ class Server(object):
         data = json.dumps(data) if data else None
 
         # if we have a token, make sure it's included in the header
+	# if not, the Authorization header gets removed (necessary for example for logout)
         self._update_token_header()
 
         response = request(method=method,
@@ -435,7 +441,9 @@ class Server(object):
     def _update_token_header(self):
         """Update header to include access token (if available) for subsequent calls."""
         if self._token:
-            self._headers['FM-Data-token'] = self._token
+            self._headers['Authorization'] = self._token
+        else:
+            self._headers.pop('Authorization', None)
         return self._headers
 
     def _process_foundset_response(self, response):
