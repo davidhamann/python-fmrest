@@ -62,12 +62,14 @@ def build_portal_params(portals, names_as_string=False):
     if names_as_string:
         portal_param = "[" + ', '.join(map(lambda x: '"' + x + '"', portal_selector)) + "]"
         params = {"portal": portal_param}
+        param_prefix = '_' # for GET we need an underscore as prefix
     else:
         params = {'portal': portal_selector}
+        param_prefix = ''
 
     for portal in portals:
-        params['_offset.' + portal['name']] = portal.get('offset', 1)
-        params['_limit.' + portal['name']] = portal.get('limit', 50)
+        params[param_prefix + 'offset.' + portal['name']] = portal.get('offset', 1)
+        params[param_prefix + 'limit.' + portal['name']] = portal.get('limit', 50)
 
     return params
 

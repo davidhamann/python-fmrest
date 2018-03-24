@@ -56,8 +56,8 @@ class Server(object):
             Use False to disable verification. Default True.
         type_conversion : bool, optional
             If True, attempt to convert string values into their potential original types.
-            FileMaker Data API always returns strings and there is no way of knowing the correct
-            type of a requested field value.
+            In previous versions of the FileMaker Data API only strings were returned and there was
+            no way of knowing the correct type of a requested field value.
 
             Be cautious with this parameter, as results may be different from what you expect!
 
@@ -313,15 +313,16 @@ class Server(object):
             layout=self.layout
         )
 
-        portal_params = build_portal_params(portals) if portals else None
-
         data = {
             'query': query,
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
-            'portal': portal_params
         }
+
+        portal_params = build_portal_params(portals) if portals else None
+        if portal_params:
+            data.update(portal_params)
 
         # FM Data API from v17 cannot handle null values, so we remove all Nones from data
         data = {k:v for k, v in data.items() if v is not None}
