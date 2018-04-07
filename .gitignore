@@ -10,4 +10,5 @@ scratch/
 .ipynb_checkpoints/
 build/
 dist/
+examples/*.jpg
 tags
