@@ -34,10 +34,10 @@ class UtilsTestCase(unittest.TestCase):
         params = build_portal_params(portals)
         self.assertEqual(
             {'portal': ["Portal1", "Portal2"],
-             '_offset.Portal1': 1,
-             '_limit.Portal1': 50,
-             '_offset.Portal2': 2,
-             '_limit.Portal2': 51},
+             'offset.Portal1': 1,
+             'limit.Portal1': 50,
+             'offset.Portal2': 2,
+             'limit.Portal2': 51},
             params)
 
     def test_string_to_time_conversion(self):
