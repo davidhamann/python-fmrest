@@ -144,3 +144,14 @@ class ServerTestCase(unittest.TestCase):
             record = server.get_record(1)
             self.assertEqual(fake_record.name, record.name)
             self.assertEqual(fake_record.drink, record.drink)
+
+    def test_upload_container(self):
+        """Test that uploading container data works without errors."""
+        with self._fms as server:
+            server.login()
+
+            response = server.upload_container(
+                1, 'portrait', ('sample.csv', 'col1,col2,col3,col4\nwhat,is,going,on\n')
+            )
+
+            self.assertTrue(response)
