@@ -83,7 +83,8 @@ class Server(object):
 
         self._token = None
         self._last_fm_error = None
-        self._headers = {'Content-Type': 'application/json'}
+        self._headers = {}
+        self._set_content_type()
 
     def __enter__(self):
         return self
@@ -248,6 +249,29 @@ class Server(object):
         # we only re-use the code and immediately consume the first (and only) record via next().
         return next(self._process_foundset_response(response))
 
+    def upload_container(self, record_id, field_name, file_):
+        """Uploads the given binary data for the given record id and returns True on success.
+        Parameters
+        -----------
+        record_id : int
+            The FileMaker record id
+        field_name : str
+            Name of the container field on the current layout without TO name. E.g.: my_container
+        file_ : fileobj
+            File object as returned by open() in binary mode.
+        """
+        path = API_PATH['record_action'].format(
+            database=self.database,
+            layout=self.layout,
+            record_id=record_id
+        ) + '/containers/' + field_name + '/1'
+
+        # requests library handles content type for multipart/form-data incl. boundary
+        self._set_content_type(False)
+        self._call_filemaker('POST', path, files={'upload': file_})
+
+        return self.last_error == 0
+
     def get_records(self, offset=1, limit=100, sort=None, portals=None):
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
@@ -408,7 +432,7 @@ class Server(object):
         method : str
             The http request method, e.g. POST
         path : str
-            The API path, /fmi/rest/api/auth/my_solution
+            The API path, /fmi/data/v1/databases/:database/...
         data : dict of str : str, optional
             Dict of parameter data for http request
             Can be None if API expects no data, e.g. for logout
@@ -449,6 +473,8 @@ class Server(object):
             raise FileMakerError(self._last_fm_error,
                                  fms_messages[0].get('message', 'Unkown error'))
 
+        self._set_content_type() # reset content type
+
         return fms_response
 
     def _update_token_header(self):
@@ -457,6 +483,22 @@ class Server(object):
             self._headers['Authorization'] = 'Bearer ' + self._token
         else:
             self._headers.pop('Authorization', None)
+        return self._headers
+
+    def _set_content_type(self, type_='application/json'):
+        """Set the Content-Type header and returns the updated _headers dict.
+
+        Parameters
+        -----------
+        type_ : str, boolen
+            String definining the content type for the HTTP header or False to remove the
+            Content-Type key from _headers (i.e. let the requests lib handle the Content-Type.)
+        path : str
+        """
+        if not type_:
+            self._headers.pop('Content-Type')
+        else:
+            self._headers['Content-Type'] = type_
         return self._headers
 
     def _process_foundset_response(self, response):
