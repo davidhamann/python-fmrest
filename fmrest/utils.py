@@ -73,6 +73,37 @@ def build_portal_params(portals, names_as_string=False):
 
     return params
 
+def build_script_params(scripts):
+    """Takes simplified scripts object and returns scripts objects as FMSDAPI expects it.
+
+    Example simplified scripts object:
+
+        scripts = {
+            'prerequest': ['script_name', 'script_parameter'],
+            'presort': ['script_name', 'script_parameter'],
+            'after': ['script_name', 'script_parameter']
+        }
+    """
+
+    # read user-defined script configuration
+    # if no values were passed, initilize list with None as script and param
+    presort = scripts.get('presort', [None]*2)
+    prerequest = scripts.get('prerequest', [None]*2)
+    after = scripts.get('after', [None]*2)
+
+    # format for FMSDAPI
+    scripts = {
+        'script.prerequest': prerequest[0],
+        'script.prerequest.param': prerequest[1],
+        'script.presort': presort[0],
+        'script.presort.param': presort[1],
+        'script': after[0],
+        'script.param': after[1],
+    }
+
+    # return only keys that have a real value
+    return {k:v for k, v in scripts.items() if v is not None}
+
 def cache_generator(iterator, cache):
     """Takes iterator and cache list, caches values before yielding them.
     Eventually flagging cache as complete.

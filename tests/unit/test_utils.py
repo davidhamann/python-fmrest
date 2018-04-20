@@ -40,6 +40,35 @@ class UtilsTestCase(unittest.TestCase):
              'limit.Portal2': 51},
             params)
 
+    def test_build_script_params(self):
+        """Test that simplified scripts object can be turned into FMSDAPI compatible one."""
+
+        scripts_in = {
+            'prerequest': ['script_prerequest', 'param_prerequest'],
+            'presort': ['script_presort', 'param_presort'],
+            'after': ['script_after', 'param_after']
+        }
+
+        scripts_out = {
+            'script.prerequest': 'script_prerequest',
+            'script.prerequest.param': 'param_prerequest',
+            'script.presort': 'script_presort',
+            'script.presort.param': 'param_presort',
+            'script': 'script_after',
+            'script.param': 'param_after'
+        }
+
+        self.assertEqual(
+            build_script_params(scripts_in), scripts_out
+        )
+
+    def test_build_script_params_partial(self):
+        """Test that only the script/param combos are returned that the user actually specified."""
+        scripts_in = {'after': ['script_after', 'param_after']}
+        scripts_out = {'script': 'script_after', 'script.param': 'param_after'}
+
+        self.assertEqual(build_script_params(scripts_in), scripts_out)
+
     def test_string_to_time_conversion(self):
         """Test that strings can be converted into their "guessed" original types."""
 

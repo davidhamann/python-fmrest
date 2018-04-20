@@ -2,7 +2,7 @@
 import json
 import importlib
 import warnings
-from .utils import request, build_portal_params, filename_from_url
+from .utils import request, build_portal_params, build_script_params, filename_from_url
 from .const import API_PATH, PORTAL_PREFIX
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
@@ -305,7 +305,7 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response))
 
-    def find(self, query, sort=None, offset=1, limit=100, portals=None):
+    def find(self, query, sort=None, offset=1, limit=100, portals=None, scripts=None):
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -331,6 +331,11 @@ class Server(object):
             Define which portals you want to include in the result.
             Example: [{'name':'objectName', 'offset':1, 'limit':50}]
             Defaults to None, which then returns all portals with default offset and limit.
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['find'].format(
             database=self.database,
@@ -344,6 +349,12 @@ class Server(object):
             'offset': str(offset),
         }
 
+        # build script param object in FMSDAPI style
+        script_params = build_script_params(scripts) if scripts else None
+        if script_params:
+            data.update(script_params)
+
+        # build portal param object in FMSDAPI style
         portal_params = build_portal_params(portals) if portals else None
         if portal_params:
             data.update(portal_params)
