@@ -356,7 +356,7 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response))
 
-    def find(self, query, sort=None, offset=1, limit=100, portals=None, scripts=None):
+    def find(self, query, sort=None, offset=1, limit=100, portals=None, scripts=None, layout=None):
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -387,6 +387,11 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        layout : str, optional
+            Passing a layout name allows you to set the response (!) layout.
+            Your find will still be performed based on the Server.layout attribute.
+            This is helpful, for example, if you want to limit the number of fields/portals being
+            returned and have a dedicated response layout.
         """
         path = API_PATH['find'].format(
             database=self.database,
@@ -398,6 +403,7 @@ class Server(object):
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
+            'layout.response': layout
         }
 
         # build script param object in FMSDAPI style
