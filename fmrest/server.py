@@ -136,13 +136,18 @@ class Server(object):
         # TODO: support for handling foundset instances inside record instance
         return self.create_record(record.to_dict(ignore_portals=True, ignore_internal_ids=True))
 
-    def create_record(self, field_data):
+    def create_record(self, field_data, scripts=None):
         """Creates a new record with given field data and returns new internal record id.
 
         Parameters
         -----------
         field_data : dict
             Dict of field names as defined in FileMaker: E.g.: {'name': 'David', 'drink': 'Coffee'}
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['record'].format(
             database=self.database,
@@ -150,6 +155,12 @@ class Server(object):
         )
 
         request_data = {'fieldData': field_data}
+
+        # build script param object in FMSDAPI style
+        script_params = build_script_params(scripts) if scripts else None
+        if script_params:
+            request_data.update(script_params)
+
         response = self._call_filemaker('POST', path, request_data)
         record_id = response.get('recordId')
 
@@ -215,13 +226,18 @@ class Server(object):
 
         return self.delete_record(record_id)
 
-    def delete_record(self, record_id):
+    def delete_record(self, record_id, scripts=None):
         """Deletes a record for the given record_id. Returns True on success.
 
         Parameters
         -----------
         record_id : int
             FileMaker's internal record id.
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['record_action'].format(
             database=self.database,
@@ -229,7 +245,9 @@ class Server(object):
             record_id=record_id
         )
 
-        self._call_filemaker('DELETE', path)
+        params = build_script_params(scripts) if scripts else None
+
+        self._call_filemaker('DELETE', path, params=params)
 
         return self.last_error == 0
 
