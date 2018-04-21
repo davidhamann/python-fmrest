@@ -32,13 +32,13 @@ class ServerTestCase(unittest.TestCase):
     def test_last_error(self, mock_request):
         """Test that FileMaker's errorCode response is available via last_error property."""
         mock_response = mock.Mock()
-        mock_response.json.return_value = {"messages": [{"code": "212"}]}
+        mock_response.json.return_value = {'messages': [{'code': '212'}], 'response': {}}
         mock_request.return_value = mock_response
 
         # Error should be None when no request has been made yet
         self.assertEqual(self._fms.last_error, None)
 
-        # Any FileMaker "errorCode" should raise a FileMakerError exception
+        # Any FileMaker error code should raise a FileMakerError exception
         with self.assertRaises(fmrest.exceptions.FileMakerError):
             self._fms.login()
 
