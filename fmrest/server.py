@@ -273,7 +273,7 @@ class Server(object):
 
         return self.last_error == 0
 
-    def get_records(self, offset=1, limit=100, sort=None, portals=None):
+    def get_records(self, offset=1, limit=100, sort=None, portals=None, scripts=None):
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -290,6 +290,11 @@ class Server(object):
             Define which portals you want to include in the result.
             Example: [{'name':'objectName', 'offset':1, 'limit':50}]
             Defaults to None, which then returns all portals with default offset and limit.
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['record'].format(
             database=self.database,
@@ -302,6 +307,12 @@ class Server(object):
 
         if sort:
             params['_sort'] = json.dumps(sort)
+
+        # build script param object in FMSDAPI style
+        script_params = build_script_params(scripts) if scripts else None
+        if script_params:
+            params.update(script_params)
+
         response = self._call_filemaker('GET', path, params=params)
 
         return Foundset(self._process_foundset_response(response))
@@ -442,14 +453,14 @@ class Server(object):
 
         Only returns keys that have a value from the last call. I.e. 'presort' will
         only be present if the last call performed a presort script.
-        The returned error will always be converted to int.
+        The returned error (0th element in list) will always be converted to int.
         """
         if self._last_script_result:
             result = {
                 k:[int(v[0]), v[1]] for k, v in self._last_script_result.items() if v[0] is not None
             }
         else:
-            result = None
+            result = {}
         return result
 
     def _call_filemaker(self, method, path, data=None, params=None, **kwargs):
