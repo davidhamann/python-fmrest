@@ -223,7 +223,7 @@ class Server(object):
 
         return self.last_error == 0
 
-    def get_record(self, record_id, portals=None):
+    def get_record(self, record_id, portals=None, scripts=None):
         """Fetches record with given ID and returns Record instance
 
         Parameters
@@ -236,6 +236,11 @@ class Server(object):
             Use this if you want to limit the amout of data returned. Offset and limit are optional
             with default values of 1 and 50, respectively.
             All portals will be returned when portals==None. Default None.
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['record_action'].format(
             database=self.database,
@@ -243,7 +248,13 @@ class Server(object):
             record_id=record_id
         )
 
-        params = build_portal_params(portals, True) if portals else None
+        params = build_portal_params(portals, True) if portals else {}
+
+        # build script param object in FMSDAPI style
+        script_params = build_script_params(scripts) if scripts else None
+        if script_params:
+            params.update(script_params)
+
         response = self._call_filemaker('GET', path, params=params)
 
         # pass response to foundset generator function. As we are only requesting one record though,
