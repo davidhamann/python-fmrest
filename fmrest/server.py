@@ -83,6 +83,7 @@ class Server(object):
 
         self._token = None
         self._last_fm_error = None
+        self._last_script_result = None
         self._headers = {}
         self._set_content_type()
 
@@ -435,6 +436,19 @@ class Server(object):
             error = None
         return error
 
+    @property
+    def last_script_result(self):
+        """Returns last script results as returned by FMS as dict.
+
+        Only returns keys that have a value from the last call. I.e. 'presort' will
+        only be present if the last call performed a presort script.
+        """
+        if self._last_script_result:
+            result = {k:v for k, v in self._last_script_result.items() if v[0] is not None}
+        else:
+            result = None
+        return result
+
     def _call_filemaker(self, method, path, data=None, params=None, **kwargs):
         """Calls a FileMaker Server Data API path and returns the parsed fms response data
 
@@ -479,6 +493,7 @@ class Server(object):
         fms_messages = response_data.get('messages')
         fms_response = response_data.get('response')
 
+        self._update_script_result(fms_response)
         self._last_fm_error = fms_messages[0].get('code', -1)
         if self.last_error != 0:
             raise FileMakerError(self._last_fm_error,
@@ -487,6 +502,25 @@ class Server(object):
         self._set_content_type() # reset content type
 
         return fms_response
+
+    def _update_script_result(self, response):
+        """Extracts script result data from fms response and updates script result attribute"""
+        self._last_script_result = {
+            'prerequest': [
+                response.get('scriptError.prerequest', None),
+                response.get('scriptResult.prerequest', None)
+            ],
+            'presort': [
+                response.get('scriptError.presort', None),
+                response.get('scriptResult.presort', None)
+            ],
+            'after': [
+                response.get('scriptError', None),
+                response.get('scriptResult', None)
+            ]
+        }
+
+        return self._last_script_result
 
     def _update_token_header(self):
         """Update header to include access token (if available) for subsequent calls."""
