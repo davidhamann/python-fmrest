@@ -160,7 +160,7 @@ class Server(object):
         mod_id = record.modification_id if validate_mod_id else None
         return self.edit_record(record.record_id, record.modifications(), mod_id)
 
-    def edit_record(self, record_id, field_data, mod_id=None):
+    def edit_record(self, record_id, field_data, mod_id=None, scripts=None):
         """Edits the record with the given record_id and field_data. Return True on success.
 
         Parameters
@@ -181,6 +181,11 @@ class Server(object):
             Pass a modification id to only edit the record when mod_id matches the current mod_id of
             the server. This is only supported for records in the current table, not related
             records.
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['record_action'].format(
             database=self.database,
@@ -191,6 +196,11 @@ class Server(object):
         request_data = {'fieldData': field_data}
         if mod_id:
             request_data['modId'] = mod_id
+
+        # build script param object in FMSDAPI style
+        script_params = build_script_params(scripts) if scripts else None
+        if script_params:
+            request_data.update(script_params)
 
         self._call_filemaker('PATCH', path, request_data)
 
