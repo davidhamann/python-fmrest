@@ -77,6 +77,37 @@ class ServerTestCase(unittest.TestCase):
     def test_edit_record(self):
         pass
 
+    def test_perform_scripts_with_find(self):
+        """Perform scripts and verify results."""
+        expected_script_result = {
+            'prerequest': [0, 'Output prerequest with param for prerequest'],
+            'presort': [0, 'Output presort with param for presort'],
+            'after': [0, 'Output with param for after'],
+        }
+        with self._fms as server:
+            server.login()
+            server.find(
+                query=[{'id': '1'}],
+                scripts={
+                    'prerequest': ['testScript_prerequest', 'for prerequest'],
+                    'presort': ['testScript_presort', 'for presort'],
+                    'after': ['testScript', 'for after'],
+                })
+
+            self.assertEqual(server.last_script_result, expected_script_result)
+
+    def test_perform_script_with_error(self):
+        """Perform a script that contains an error and check if error is returned."""
+        expected_script_result = {'after': [3, None]} # unsupported script step
+
+        with self._fms as server:
+            server.login()
+            server.find(
+                query=[{'id': '1'}],
+                scripts={'after': ['testScriptWithError', None]})
+
+            self.assertEqual(server.last_script_result, expected_script_result)
+
     def test_delete_record_instance(self):
         with self._fms as server:
             server.login()

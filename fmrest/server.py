@@ -438,13 +438,16 @@ class Server(object):
 
     @property
     def last_script_result(self):
-        """Returns last script results as returned by FMS as dict.
+        """Returns last script results as returned by FMS as dict in format {type: [error, result]}
 
         Only returns keys that have a value from the last call. I.e. 'presort' will
         only be present if the last call performed a presort script.
+        The returned error will always be converted to int.
         """
         if self._last_script_result:
-            result = {k:v for k, v in self._last_script_result.items() if v[0] is not None}
+            result = {
+                k:[int(v[0]), v[1]] for k, v in self._last_script_result.items() if v[0] is not None
+            }
         else:
             result = None
         return result
