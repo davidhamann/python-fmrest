@@ -251,7 +251,7 @@ class Server(object):
 
         return self.last_error == 0
 
-    def get_record(self, record_id, portals=None, scripts=None):
+    def get_record(self, record_id, portals=None, scripts=None, layout=None):
         """Fetches record with given ID and returns Record instance
 
         Parameters
@@ -269,6 +269,10 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        layout : str, optional
+            Passing a layout name allows you to set the response (!) layout.
+            This is helpful, for example, if you want to limit the number of fields/portals being
+            returned and have a dedicated response layout.
         """
         path = API_PATH['record_action'].format(
             database=self.database,
@@ -277,6 +281,7 @@ class Server(object):
         )
 
         params = build_portal_params(portals, True) if portals else {}
+        params['layout.response'] = layout
 
         # build script param object in FMSDAPI style
         script_params = build_script_params(scripts) if scripts else None
@@ -312,7 +317,7 @@ class Server(object):
 
         return self.last_error == 0
 
-    def get_records(self, offset=1, limit=100, sort=None, portals=None, scripts=None):
+    def get_records(self, offset=1, limit=100, sort=None, portals=None, scripts=None, layout=None):
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -334,6 +339,10 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        layout : str, optional
+            Passing a layout name allows you to set the response (!) layout.
+            This is helpful, for example, if you want to limit the number of fields/portals being
+            returned and have a dedicated response layout.
         """
         path = API_PATH['record'].format(
             database=self.database,
@@ -343,6 +352,7 @@ class Server(object):
         params = build_portal_params(portals, True) if portals else {}
         params['_offset'] = offset
         params['_limit'] = limit
+        params['layout.response'] = layout
 
         if sort:
             params['_sort'] = json.dumps(sort)
