@@ -32,7 +32,7 @@ class Server(object):
     """
 
     def __init__(self, url, user,
-                 password, database, layout,
+                 password, database, layout, data_sources=[],
                  verify_ssl=True, type_conversion=False):
         """Initialize the Server class.
 
@@ -51,6 +51,9 @@ class Server(object):
         layout : str
             Layout to work with. Can be changed between calls by setting the layout attribute again,
             e.g.: fmrest_instance.layout = 'new_layout'.
+        data_sources : list, optional
+            List of dicts in format [{'database': 'db_file', 'username': 'admin', 'password': 'admin'}]
+            Use this if for your actions you need to be authenticated to multiple DB files.
         verify_ssl : bool, optional
             Switch to set if certificate should be verified.
             Use False to disable verification. Default True.
@@ -70,6 +73,7 @@ class Server(object):
         self.password = password
         self.database = database
         self.layout = layout
+        self.data_sources = data_sources
         self.verify_ssl = verify_ssl
 
         self.type_conversion = type_conversion
@@ -108,7 +112,7 @@ class Server(object):
         """
 
         path = API_PATH['auth'].format(database=self.database, token='')
-        data = {} # http body must have a value, even if it's {}
+        data = {'fmDataSource': self.data_sources}
 
         response = self._call_filemaker('POST', path, data, auth=(self.user, self.password))
         self._token = response.get('token', None)
