@@ -195,26 +195,21 @@ class Server(object):
 
             To delete related records, use {'deleteRelated': 'Orders.2'}, where 2 is the record id
             of the related record.
-
-            To create a related record, use {'Orders::DeliveryTime.0':'3:07:55'}, where 0 stands for
-            the record id (i.e. new record). Use an exisiting record id to edit related values.
-
-            Note that only one related record can be created per call.
         mod_id: int, optional
             Pass a modification id to only edit the record when mod_id matches the current mod_id of
             the server. This is only supported for records in the current table, not related
             records.
-        scripts : dict, optional
-            Specify which scripts should run when with which parameters
-            Example: {'prerequest': ['my_script', 'my_param']}
-            Allowed types: 'prerequest', 'presort', 'after'
-            List should have length of 2 (both script name and parameter are required.)
         portals : dict
             Specify the records that should be edited via a portal.
             If recordId is not specified, a new record will be created.
             Example: {'my_portal': [
                 {'TO::field': 'hello', 'recordId': '42'}
             ]
+        scripts : dict, optional
+            Specify which scripts should run when with which parameters
+            Example: {'prerequest': ['my_script', 'my_param']}
+            Allowed types: 'prerequest', 'presort', 'after'
+            List should have length of 2 (both script name and parameter are required.)
         """
         path = API_PATH['record_action'].format(
             database=self.database,
