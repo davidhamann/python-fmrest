@@ -140,7 +140,7 @@ class Server(object):
         # TODO: support for handling foundset instances inside record instance
         return self.create_record(record.to_dict(ignore_portals=True, ignore_internal_ids=True))
 
-    def create_record(self, field_data, scripts=None):
+    def create_record(self, field_data, portals=None, scripts=None):
         """Creates a new record with given field data and returns new internal record id.
 
         Parameters
@@ -152,6 +152,12 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        portals : dict
+            Specify the records that should be created via a portal (must allow creation of records)
+            Example: {'my_portal': [
+                {'TO::field': 'hello', 'TO::field2': 'world'},
+                {'TO::field': 'another record'}
+            ]
         """
         path = API_PATH['record'].format(
             database=self.database,
@@ -159,6 +165,8 @@ class Server(object):
         )
 
         request_data = {'fieldData': field_data}
+        if portals:
+            request_data['portalData'] = portals
 
         # build script param object in FMSDAPI style
         script_params = build_script_params(scripts) if scripts else None
