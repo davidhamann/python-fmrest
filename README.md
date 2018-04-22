@@ -86,6 +86,7 @@ Some bits and pieces are not implemented yet.
 
 Examples of what I can think of:
 
+- OAuth support
 - Handling of reserved field names (currently, `record_id`, `modification_id`, `is_dirty` clash with used properties and you will not be able to read your own fields with the same name)
 - Needs more test coverage, e.g. for `get_records()`, `find()`, `edit_record()`
 - Some more usage examples on how to create, edit, delete, set globals, etc. Tell me where you have issues by opening an [issue](https://github.com/davidhamann/python-fmrest/issues).
