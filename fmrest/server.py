@@ -183,7 +183,7 @@ class Server(object):
         mod_id = record.modification_id if validate_mod_id else None
         return self.edit_record(record.record_id, record.modifications(), mod_id)
 
-    def edit_record(self, record_id, field_data, mod_id=None, scripts=None):
+    def edit_record(self, record_id, field_data, mod_id=None, portals=None, scripts=None):
         """Edits the record with the given record_id and field_data. Return True on success.
 
         Parameters
@@ -209,6 +209,12 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        portals : dict
+            Specify the records that should be edited via a portal.
+            If recordId is not specified, a new record will be created.
+            Example: {'my_portal': [
+                {'TO::field': 'hello', 'recordId': '42'}
+            ]
         """
         path = API_PATH['record_action'].format(
             database=self.database,
@@ -219,6 +225,9 @@ class Server(object):
         request_data = {'fieldData': field_data}
         if mod_id:
             request_data['modId'] = mod_id
+
+        if portals:
+            request_data['portalData'] = portals
 
         # build script param object in FMSDAPI style
         script_params = build_script_params(scripts) if scripts else None
