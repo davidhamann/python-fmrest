@@ -18,6 +18,12 @@ Quick example:
 John Doe
 ```
 
+## NEW: FileMaker 17 compatible! ✨🎉
+
+This library is fully compatible with FileMaker 17. All new features (including script and container support) are supported and all API changes from v16 (renamed API paths, formats, etc.) are being handled.
+
+v16 support is dropped as the trial of the FMSDAPI automatically terminates in September 2018. If you still need the library for v16, please download/use the tagged release for v16. If you are having problems, please create a new issue.
+
 ## Supported Features
 
 All API paths can be served:
@@ -27,23 +33,21 @@ All API paths can be served:
 - find
 - global
 
-## It's still early! Feel free to contribute!
+## Feel free to contribute!
 
-The module is still in development and likely has some issues and missing parts ⚠️ (also see [TODO](#to-do) section below). If you would like to contribute, you can help with the code, try it out and report 🐞🐞, propose new features, write tests, add examples and documentation.
+If you would like to contribute, you can help with the code, try it out and report 🐞🐞, propose new features, write tests, add examples and documentation.
 
 There's always room for improvement!
 
 ---
 
-**Note that there might still be some breaking changes ahead. Also note, that the FileMaker Data API is still in trial phase.**
-
 Questions/problems? Open a [new issue](https://github.com/davidhamann/python-fmrest/issues). You can also contact me directly at dh@davidhamann.de.
 
 ## Install
 
-You need Python 3 and FileMaker Server/Cloud 16 (below there is no Data API 😎)
+You need Python 3.6 and FileMaker Server/Cloud 17.
 
-At the current stage, you can install it like this (preferably in a [virtualenv](https://virtualenv.pypa.io/en/stable/)):
+At the current stage, you can install the library like this (preferably in a [virtualenv](https://virtualenv.pypa.io/en/stable/)):
 
 ```
 pip install python-fmrest-master.zip
@@ -69,20 +73,20 @@ Running `pytest` will run all tests. To run specific tests, specify the path:
 pytest tests/unit
 ```
 
-For running `tests/integration` you will need to have a real FileMaker Server running.
+For running `tests/integration` you will need to have a real FileMaker Server and a test database.
 
 ## Usage Examples
 
-Examples can be found in the [examples](https://github.com/davidhamann/python-fmrest/tree/master/examples) directory.
+Examples can be found in the [examples](https://github.com/davidhamann/python-fmrest/tree/master/examples) directory. Can't figure something out or feel an example is missing? Please file an issue.
 
 ## TO DO
 <a id="to-do"></a>
 
-Some bits and pieces that are essential, and some that would be nice to have, are not implemented yet.
+Some bits and pieces are not implemented yet.
 
 Examples of what I can think of:
 
 - Handling of reserved field names (currently, `record_id`, `modification_id`, `is_dirty` clash with used properties and you will not be able to read your own fields with the same name)
 - Needs more test coverage, e.g. for `get_records()`, `find()`, `edit_record()`
 - Some more usage examples on how to create, edit, delete, set globals, etc. Tell me where you have issues by opening an [issue](https://github.com/davidhamann/python-fmrest/issues).
-- cli support would also be great
+- cli support would be great at some point in the future :-)
