@@ -75,6 +75,14 @@ pytest tests/unit
 
 For running `tests/integration` you will need to have a real FileMaker Server and a test database.
 
+To have all tests run every time before a commit, please install the git hook:
+
+```
+cd hooks
+chmod +x install.sh pre-commit.sh run-tests.sh
+./install.sh
+```
+
 ## Usage Examples
 
 Examples can be found in the [examples](https://github.com/davidhamann/python-fmrest/tree/master/examples) directory. Can't figure something out or feel an example is missing? Please file an issue.
