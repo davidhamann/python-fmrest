@@ -47,16 +47,16 @@ Questions/problems? Open a [new issue](https://github.com/davidhamann/python-fmr
 
 You need Python 3.6 and FileMaker Server/Cloud 17.
 
-At the current stage, you can install the library like this (preferably in a [virtualenv](https://virtualenv.pypa.io/en/stable/)):
+You can install the library like this (preferably in a [virtualenv](https://virtualenv.pypa.io/en/stable/)):
 
 ```
-pip install python-fmrest-master.zip
+pip install python-fmrest
 ```
 
-Or manually:
+Or the latest master:
 
 ```
-python setup.py install
+pip install https://github.com/davidhamann/python-fmrest/archive/master.zip
 ```
 
 ## Local development / running tests
