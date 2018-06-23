@@ -1,4 +1,5 @@
 """Utility functions for fmrest"""
+from typing import List, Dict, Any, Optional, Iterable
 import requests
 from .exceptions import RequestException
 from .const import TIMEOUT
@@ -20,14 +21,14 @@ requests_log.propagate = True
 #--- DEBUG
 """
 
-def request(*args, **kwargs):
+def request(*args, **kwargs) -> requests.Response:
     """Wrapper around requests library request call"""
     try:
         return requests.request(*args, timeout=TIMEOUT, **kwargs)
     except Exception as ex:
         raise RequestException(ex, args, kwargs) from None
 
-def build_portal_params(portals, names_as_string=False):
+def build_portal_params(portals: List[Dict], names_as_string: bool = False) -> Dict[str, Any]:
     """Takes a list of dicts and returns a dict in a format as FMServer expects it.
 
     FMS expects portals and their options to be specified in the following format:
@@ -58,10 +59,12 @@ def build_portal_params(portals, names_as_string=False):
         If False, portals key will have a value of type list, like ["Portal1", "Portal2"]
     """
 
+    params: Dict[str, Any]
+
     portal_selector = [portal['name'] for portal in portals]
     if names_as_string:
         portal_param = "[" + ', '.join(map(lambda x: '"' + x + '"', portal_selector)) + "]"
-        params = {"portal": portal_param}
+        params = {'portal': portal_param}
         param_prefix = '_' # for GET we need an underscore as prefix
     else:
         params = {'portal': portal_selector}
@@ -73,7 +76,7 @@ def build_portal_params(portals, names_as_string=False):
 
     return params
 
-def build_script_params(scripts):
+def build_script_params(scripts: Dict) -> Dict[str, str]:
     """Takes simplified scripts object and returns scripts objects as FMSDAPI expects it.
 
     Example simplified scripts object:
@@ -104,7 +107,7 @@ def build_script_params(scripts):
     # return only keys that have a real value
     return {k:v for k, v in scripts.items() if v is not None}
 
-def cache_generator(iterator, cache):
+def cache_generator(iterator: Iterable, cache: List) -> Iterable:
     """Takes iterator and cache list, caches values before yielding them.
     Eventually flagging cache as complete.
 
@@ -123,7 +126,7 @@ def cache_generator(iterator, cache):
 
     cache[1] = True # all values have been cached
 
-def filename_from_url(url):
+def filename_from_url(url: str) -> str:
     """Returns filename from given remote container url."""
 
     # remove query string
