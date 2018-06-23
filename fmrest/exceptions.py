@@ -1,3 +1,6 @@
+from typing import Any
+import requests
+
 class FMRestException(Exception):
     """The base fmrest Exception."""
 
@@ -7,7 +10,7 @@ class RequestException(FMRestException):
     Re-raised after requests module exception
     """
 
-    def __init__(self, original_exception, request_args, request_kwargs):
+    def __init__(self, original_exception: Exception, request_args: Any, request_kwargs: Any) -> None:
         """Parameters
         ----------
         original_exception
@@ -29,7 +32,7 @@ class ResponseException(FMRestException):
     Re-raised after requests module exception
     """
 
-    def __init__(self, original_exception, response):
+    def __init__(self, original_exception: Exception, response: requests.Response) -> None:
         """Parameters
         ----------
         original_exception
@@ -51,7 +54,7 @@ class BadJSON(ResponseException):
 class FileMakerError(FMRestException):
     """Error raised by FileMaker Data API"""
 
-    def __init__(self, error_code, error_message):
+    def __init__(self, error_code: int, error_message: str) -> None:
         super().__init__('FileMaker Server returned error {}, {}'.format(error_code, error_message))
 
 class RecordError(FMRestException):
