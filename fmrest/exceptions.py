@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Optional, Any
 import requests
 
 class FMRestException(Exception):
@@ -54,7 +54,7 @@ class BadJSON(ResponseException):
 class FileMakerError(FMRestException):
     """Error raised by FileMaker Data API"""
 
-    def __init__(self, error_code: int, error_message: str) -> None:
+    def __init__(self, error_code: Optional[int], error_message: str) -> None:
         super().__init__('FileMaker Server returned error {}, {}'.format(error_code, error_message))
 
 class RecordError(FMRestException):

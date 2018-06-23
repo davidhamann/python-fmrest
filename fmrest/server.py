@@ -2,7 +2,8 @@
 import json
 import importlib
 import warnings
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, IO, Tuple, Union, Iterator
+import requests
 from .utils import request, build_portal_params, build_script_params, filename_from_url
 from .const import API_PATH, PORTAL_PREFIX
 from .exceptions import BadJSON, FileMakerError, RecordError
@@ -87,24 +88,24 @@ class Server(object):
             raise ValueError('Please make sure to use https, otherwise calls to the Data '
                              'API will not work.')
 
-        self._token = None
-        self._last_fm_error = None
-        self._last_script_result = None
+        self._token: Optional[str] = None
+        self._last_fm_error: Optional[int] = None
+        self._last_script_result: Optional[Dict[str, List]] = None
         self._headers: Dict[str, str] = {}
         self._set_content_type()
 
-    def __enter__(self):
+    def __enter__(self) -> 'Server':
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_traceback):
+    def __exit__(self, exc_type, exc_val, exc_traceback) -> None:
         self.logout()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<Server logged_in={} database={} layout={}>'.format(
             bool(self._token), self.database, self.layout
         )
 
-    def login(self):
+    def login(self) -> Optional[str]:
         """Logs into FMServer and returns access token.
 
         Authentication happens via HTTP Basic Auth. Subsequent calls to the API will then use
@@ -121,7 +122,7 @@ class Server(object):
 
         return self._token
 
-    def logout(self):
+    def logout(self) -> bool:
         """Logs out of current session. Returns True if successful.
 
         Note: this method is also called by __exit__
@@ -137,12 +138,14 @@ class Server(object):
 
         return self.last_error == 0
 
-    def create(self, record):
+    def create(self, record: Record) -> Optional[int]:
         """Shortcut to create_record method. Takes record instance and calls create_record."""
         # TODO: support for handling foundset instances inside record instance
         return self.create_record(record.to_dict(ignore_portals=True, ignore_internal_ids=True))
 
-    def create_record(self, field_data, portals=None, scripts=None):
+    def create_record(self, field_data: Dict[str, Any],
+                      portals: Optional[Dict[str, Any]] = None,
+                      scripts: Optional[Dict[str, List]] = None) -> Optional[int]:
         """Creates a new record with given field data and returns new internal record id.
 
         Parameters
@@ -166,7 +169,7 @@ class Server(object):
             layout=self.layout,
         )
 
-        request_data = {'fieldData': field_data}
+        request_data: Dict = {'fieldData': field_data}
         if portals:
             request_data['portalData'] = portals
 
@@ -178,14 +181,16 @@ class Server(object):
         response = self._call_filemaker('POST', path, request_data)
         record_id = response.get('recordId')
 
-        return int(record_id)
+        return int(record_id) if record_id else None
 
-    def edit(self, record, validate_mod_id=False):
+    def edit(self, record: Record, validate_mod_id: bool = False) -> bool:
         """Shortcut to edit_record method. Takes (modified) record instance and calls edit_record"""
         mod_id = record.modification_id if validate_mod_id else None
         return self.edit_record(record.record_id, record.modifications(), mod_id)
 
-    def edit_record(self, record_id, field_data, mod_id=None, portals=None, scripts=None):
+    def edit_record(self, record_id: int, field_data: Dict[str, Any],
+                    mod_id: Optional[int] = None, portals: Optional[Dict[str, Any]] = None,
+                    scripts: Optional[Dict[str, List]] = None) -> bool:
         """Edits the record with the given record_id and field_data. Return True on success.
 
         Parameters
@@ -219,7 +224,7 @@ class Server(object):
             record_id=record_id
         )
 
-        request_data = {'fieldData': field_data}
+        request_data: Dict = {'fieldData': field_data}
         if mod_id:
             request_data['modId'] = mod_id
 
@@ -235,7 +240,7 @@ class Server(object):
 
         return self.last_error == 0
 
-    def delete(self, record):
+    def delete(self, record: Record) -> bool:
         """Shortcut to delete_record method. Takes record instance and calls delete_record."""
         try:
             record_id = record.record_id
@@ -244,7 +249,7 @@ class Server(object):
 
         return self.delete_record(record_id)
 
-    def delete_record(self, record_id, scripts=None):
+    def delete_record(self, record_id: int, scripts: Optional[Dict[str, List]] = None):
         """Deletes a record for the given record_id. Returns True on success.
 
         Parameters
@@ -269,7 +274,9 @@ class Server(object):
 
         return self.last_error == 0
 
-    def get_record(self, record_id, portals=None, scripts=None, layout=None):
+    def get_record(self, record_id: int, portals: Optional[List[Dict]] = None,
+                   scripts: Optional[Dict[str, List]] = None,
+                   layout: Optional[str] = None) -> Record:
         """Fetches record with given ID and returns Record instance
 
         Parameters
@@ -312,7 +319,7 @@ class Server(object):
         # we only re-use the code and immediately consume the first (and only) record via next().
         return next(self._process_foundset_response(response))
 
-    def upload_container(self, record_id, field_name, file_):
+    def upload_container(self, record_id: int, field_name: str, file_: IO) -> bool:
         """Uploads the given binary data for the given record id and returns True on success.
         Parameters
         -----------
@@ -335,7 +342,11 @@ class Server(object):
 
         return self.last_error == 0
 
-    def get_records(self, offset=1, limit=100, sort=None, portals=None, scripts=None, layout=None):
+    def get_records(self, offset: int = 1, limit: int = 100,
+                    sort: Optional[List[Dict[str, str]]] = None,
+                    portals: Optional[List[Dict[str, Any]]] = None,
+                    scripts: Optional[Dict[str, List]] = None,
+                    layout: Optional[str] = None) -> Foundset:
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -384,7 +395,12 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response))
 
-    def find(self, query, sort=None, offset=1, limit=100, portals=None, scripts=None, layout=None):
+    def find(self, query: List[Dict[str, Any]],
+             sort: Optional[List[Dict[str, str]]] = None,
+             offset: int = 1, limit: int = 100,
+             portals: Optional[List[Dict[str, Any]]] = None,
+             scripts: Optional[Dict[str, List]] = None,
+             layout: Optional[str] = None) -> Foundset:
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -451,7 +467,8 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response))
 
-    def fetch_file(self, file_url, stream=False):
+    def fetch_file(self, file_url: str,
+                   stream: bool = False) -> Tuple[str, Optional[str], Optional[str], requests.Response]:
         """Fetches the file from the given url.
 
         Returns a tuple of filename (unique identifier), content type (e.g. image/png), length,
@@ -486,7 +503,7 @@ class Server(object):
                 response.headers.get('Content-Length'),
                 response)
 
-    def set_globals(self, globals_):
+    def set_globals(self, globals_: Dict[str, Any]) -> bool:
         """Set global fields for the currently active session. Returns True on success.
 
         Global fields do not need to be placed on the layout and can be used for establishing
@@ -508,12 +525,14 @@ class Server(object):
         return self.last_error == 0
 
     @property
-    def last_error(self):
+    def last_error(self) -> Optional[int]:
         """Returns last error number returned by FileMaker Server as int.
 
         Error is set by _call_filemaker method. If error == -1, the previous request failed
         and no FM error code is available. If no request was made yet, last_error will be None.
         """
+        error: Optional[int]
+
         if self._last_fm_error:
             error = int(self._last_fm_error)
         else:
@@ -521,22 +540,25 @@ class Server(object):
         return error
 
     @property
-    def last_script_result(self):
+    def last_script_result(self) -> Dict:
         """Returns last script results as returned by FMS as dict in format {type: [error, result]}
 
         Only returns keys that have a value from the last call. I.e. 'presort' will
         only be present if the last call performed a presort script.
         The returned error (0th element in list) will always be converted to int.
         """
+        result: Dict = {}
+
         if self._last_script_result:
             result = {
                 k:[int(v[0]), v[1]] for k, v in self._last_script_result.items() if v[0] is not None
             }
-        else:
-            result = {}
         return result
 
-    def _call_filemaker(self, method, path, data=None, params=None, **kwargs):
+    def _call_filemaker(self, method: str, path: str,
+                        data: Optional[Dict] = None,
+                        params: Optional[Dict] = None,
+                        **kwargs: Any) -> Dict:
         """Calls a FileMaker Server Data API path and returns the parsed fms response data
 
         Parameters
@@ -557,7 +579,7 @@ class Server(object):
         """
 
         url = self.url + path
-        data = json.dumps(data) if data else None
+        request_data = json.dumps(data) if data else None
 
         # if we have a token, make sure it's included in the header
 	# if not, the Authorization header gets removed (necessary for example for logout)
@@ -566,7 +588,7 @@ class Server(object):
         response = request(method=method,
                            headers=self._headers,
                            url=url,
-                           data=data,
+                           data=request_data,
                            verify=self.verify_ssl,
                            params=params,
                            **kwargs
@@ -590,7 +612,7 @@ class Server(object):
 
         return fms_response
 
-    def _update_script_result(self, response):
+    def _update_script_result(self, response: Dict) -> Dict[str, List]:
         """Extracts script result data from fms response and updates script result attribute"""
         self._last_script_result = {
             'prerequest': [
@@ -609,7 +631,7 @@ class Server(object):
 
         return self._last_script_result
 
-    def _update_token_header(self):
+    def _update_token_header(self) -> Dict[str, str]:
         """Update header to include access token (if available) for subsequent calls."""
         if self._token:
             self._headers['Authorization'] = 'Bearer ' + self._token
@@ -617,23 +639,25 @@ class Server(object):
             self._headers.pop('Authorization', None)
         return self._headers
 
-    def _set_content_type(self, type_='application/json'):
+    def _set_content_type(self, type_: Union[str, bool] = 'application/json') -> Dict[str, str]:
         """Set the Content-Type header and returns the updated _headers dict.
 
         Parameters
         -----------
-        type_ : str, boolen
+        type_ : str, boolean
             String definining the content type for the HTTP header or False to remove the
             Content-Type key from _headers (i.e. let the requests lib handle the Content-Type.)
         path : str
         """
-        if not type_:
+        if isinstance(type_, str):
+            self._headers['Content-Type'] = type_
+        elif not type_:
             self._headers.pop('Content-Type')
         else:
-            self._headers['Content-Type'] = type_
+            raise ValueError
         return self._headers
 
-    def _process_foundset_response(self, response):
+    def _process_foundset_response(self, response: Dict) -> Iterator[Record]:
         """Generator function that takes a response object, brings it into a Foundset/Record
         structure and yields processed Records.
 
@@ -645,8 +669,8 @@ class Server(object):
 
         Parameters
         -----------
-        response : requests module response
-            HTTP response from the requests module
+        response : dict
+            FMS response from a _call_filemaker request
         """
         data = response['data']
 

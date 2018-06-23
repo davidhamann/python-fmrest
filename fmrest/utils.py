@@ -76,7 +76,7 @@ def build_portal_params(portals: List[Dict], names_as_string: bool = False) -> D
 
     return params
 
-def build_script_params(scripts: Dict) -> Dict[str, str]:
+def build_script_params(scripts: Dict[str, List]) -> Dict[str, str]:
     """Takes simplified scripts object and returns scripts objects as FMSDAPI expects it.
 
     Example simplified scripts object:
@@ -95,7 +95,7 @@ def build_script_params(scripts: Dict) -> Dict[str, str]:
     after = scripts.get('after', [None]*2)
 
     # format for FMSDAPI
-    scripts = {
+    verbose_scripts = {
         'script.prerequest': prerequest[0],
         'script.prerequest.param': prerequest[1],
         'script.presort': presort[0],
@@ -105,7 +105,7 @@ def build_script_params(scripts: Dict) -> Dict[str, str]:
     }
 
     # return only keys that have a real value
-    return {k:v for k, v in scripts.items() if v is not None}
+    return {k:v for k, v in verbose_scripts.items() if v is not None}
 
 def cache_generator(iterator: Iterator, cache: List) -> Iterator:
     """Takes iterator and cache list, caches values before yielding them.
