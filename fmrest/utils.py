@@ -1,5 +1,5 @@
 """Utility functions for fmrest"""
-from typing import List, Dict, Any, Optional, Iterable
+from typing import List, Dict, Any, Iterator
 import requests
 from .exceptions import RequestException
 from .const import TIMEOUT
@@ -107,7 +107,7 @@ def build_script_params(scripts: Dict) -> Dict[str, str]:
     # return only keys that have a real value
     return {k:v for k, v in scripts.items() if v is not None}
 
-def cache_generator(iterator: Iterable, cache: List) -> Iterable:
+def cache_generator(iterator: Iterator, cache: List) -> Iterator:
     """Takes iterator and cache list, caches values before yielding them.
     Eventually flagging cache as complete.
 

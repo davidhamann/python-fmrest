@@ -2,6 +2,7 @@
 import json
 import importlib
 import warnings
+from typing import List, Dict, Optional
 from .utils import request, build_portal_params, build_script_params, filename_from_url
 from .const import API_PATH, PORTAL_PREFIX
 from .exceptions import BadJSON, FileMakerError, RecordError
@@ -31,9 +32,10 @@ class Server(object):
             # do stuff
     """
 
-    def __init__(self, url, user,
-                 password, database, layout, data_sources=[],
-                 verify_ssl=True, type_conversion=False):
+    def __init__(self, url: str, user: str,
+                 password: str, database: str, layout: str,
+                 data_sources: Optional[List[Dict]] = None, verify_ssl: bool = True,
+                 type_conversion: bool = False):
         """Initialize the Server class.
 
         Parameters
@@ -73,7 +75,7 @@ class Server(object):
         self.password = password
         self.database = database
         self.layout = layout
-        self.data_sources = data_sources
+        self.data_sources = [] if data_sources is None else data_sources
         self.verify_ssl = verify_ssl
 
         self.type_conversion = type_conversion

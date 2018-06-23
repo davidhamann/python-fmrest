@@ -1,5 +1,6 @@
 """Record class for FileMaker record responses"""
 
+from typing import List, Dict, Any, Optional
 from .utils import convert_string_type
 from .const import PORTAL_PREFIX
 
@@ -10,7 +11,8 @@ class Record(object):
     """
     __slots__ = ('_keys', '_values', '_in_portal', '_modifications')
 
-    def __init__(self, keys, values, in_portal=False, type_conversion=False):
+    def __init__(self, keys: List[str], values: List[Any],
+                 in_portal: bool = False, type_conversion: bool = False) -> None:
         """Initialize the Record class.
 
         Parameters
@@ -32,6 +34,7 @@ class Record(object):
 
         self._keys = keys
 
+        self._values: List[Any]
         if type_conversion:
             self._values = []
             for value in values:
@@ -41,19 +44,19 @@ class Record(object):
             self._values = values
 
         self._in_portal = in_portal
-        self._modifications = {}
+        self._modifications: Dict[str, Any] = {}
 
         if len(self._keys) != len(self._values):
             raise ValueError("Length of keys does not match length of values.")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<Record id={} modification_id={} is_dirty={}>'.format(
             self.record_id,
             self.modification_id,
             self.is_dirty
         )
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         """Returns value for given key. For dict lookups, like my_id = record['id']."""
         keys = self.keys()
 
@@ -64,7 +67,7 @@ class Record(object):
             raise KeyError(("No field named {}. Note that the Data API only returns fields "
                             "placed on your FileMaker layout.").format(key))
 
-    def __getattr__(self, key):
+    def __getattr__(self, key: str) -> Any:
         """Returns value for given key. For attribute lookups, like my_id = record.id.
 
         Calls __getitem__ for key access.
@@ -74,7 +77,7 @@ class Record(object):
         except KeyError as ex:
             raise AttributeError(ex) from None
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         """Allows changing values of fields available in _keys.
 
         Modified keys land in _modifications and are later used to write values back to
@@ -101,7 +104,7 @@ class Record(object):
             # allow setting of attributes in __slots__
             super().__setattr__(key, value)
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
         """See __setitem__. Returns AttributeError if trying to set a value for a field/attribute
         not existing in the record instance.
         """
@@ -110,7 +113,7 @@ class Record(object):
         except KeyError as ex:
             raise AttributeError(ex) from None
 
-    def modifications(self):
+    def modifications(self) -> Dict[str, Any]:
         """Returns a dict of changed keys in the form of {key : new_value}.
 
         Used for writing back record changes via Server.edit(record).
@@ -118,12 +121,12 @@ class Record(object):
         return self._modifications
 
     @property
-    def is_dirty(self):
+    def is_dirty(self) -> bool:
         """Returns True if key values have been modified."""
         return len(self._modifications) > 0
 
     @property
-    def record_id(self):
+    def record_id(self) -> int:
         """Returns the internal record id.
 
         This is exposed as a method to reliably return the record id, even if the API might change
@@ -132,7 +135,7 @@ class Record(object):
         return int(self.recordId)
 
     @property
-    def modification_id(self):
+    def modification_id(self) -> Optional[int]:
         """Returns the internal modification id.
 
         This is exposed as a method to reliably return the modification id, even if the API might
@@ -140,15 +143,15 @@ class Record(object):
         """
         return None if self._in_portal else int(self.modId)
 
-    def keys(self):
+    def keys(self) -> List[str]:
         """Returns all keys of this record."""
         return self._keys
 
-    def values(self):
+    def values(self) -> List[Any]:
         """Returns all values of this record."""
         return self._values
 
-    def to_dict(self, ignore_portals=False, ignore_internal_ids=False):
+    def to_dict(self, ignore_portals: bool = False, ignore_internal_ids: bool = False) -> Dict[str, Any]:
         """Returns record values as dictionary of key: val."""
         zipped = zip(self.keys(), self.values())
 
@@ -162,7 +165,7 @@ class Record(object):
             out.pop('modId', None)
         return out
 
-    def pop(self, key, default=None):
+    def pop(self, key: str, default: Any = None) -> Any:
         """Pops the record's key. Returns key's value or default."""
         keys = self.keys()
 
