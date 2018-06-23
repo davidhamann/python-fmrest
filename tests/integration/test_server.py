@@ -15,6 +15,10 @@ ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
 DATABASE = os.getenv('DATABASE', 'Contacts')
 LAYOUT = os.getenv('LAYOUT', 'Contacts')
 
+SECOND_DS = os.getenv('SECOND_DS', 'secondDataSource')
+SECOND_DS_ACCOUNT_NAME = os.getenv('SECOND_DS_ACCOUNT_NAME', 'admin2')
+SECOND_DS_ACCOUNT_PASS = os.getenv('SECOND_DS_ACCOUNT_PASS', 'admin2')
+
 class ServerTestCase(unittest.TestCase):
     """Server test suite"""
     def setUp(self):
@@ -33,6 +37,26 @@ class ServerTestCase(unittest.TestCase):
         """Test that login returns string token on success."""
         with self._fms as server:
             self.assertIsInstance(server.login(), str)
+
+    def test_login_data_sources(self):
+        """Test login with second data source."""
+        fms = fmrest.Server(url=URL,
+                            user=ACCOUNT_NAME,
+                            password=ACCOUNT_PASS,
+                            database=DATABASE,
+                            layout=LAYOUT,
+                            verify_ssl=False,
+                            data_sources=[
+                                {'database': SECOND_DS,
+                                 'username': SECOND_DS_ACCOUNT_NAME,
+                                 'password': SECOND_DS_ACCOUNT_PASS}
+                            ]
+                           )
+        with fms as server:
+            server.login()
+            record = server.get_record(1, portals=[{'name': 'secondDataSource'}])
+            # read test value from second data source
+            self.assertEqual(record.portal_secondDataSource[0]['secondDataSource::id'], 1)
 
     def test_logout(self):
         """Test that server accepts logout request."""
