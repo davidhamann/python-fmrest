@@ -35,7 +35,7 @@ class Server(object):
     def __init__(self, url: str, user: str,
                  password: str, database: str, layout: str,
                  data_sources: Optional[List[Dict]] = None, verify_ssl: bool = True,
-                 type_conversion: bool = False):
+                 type_conversion: bool = False) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -90,7 +90,7 @@ class Server(object):
         self._token = None
         self._last_fm_error = None
         self._last_script_result = None
-        self._headers = {}
+        self._headers: Dict[str, str] = {}
         self._set_content_type()
 
     def __enter__(self):
