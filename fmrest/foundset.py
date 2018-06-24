@@ -1,14 +1,16 @@
 """Foundset class for collections of Records"""
 
 import itertools
+from typing import Iterator, List, Any
 from .utils import cache_generator
+from .record import Record
 
 class Foundset(object):
     """A set of Record instances
 
     Foundsets are used for both find results and portal data (related records)
     """
-    def __init__(self, records):
+    def __init__(self, records: Iterator) -> None:
         """Initialize the Foundset class.
 
         The foundset is cached while being consumed, so that subsequent iterations are possible.
@@ -24,12 +26,12 @@ class Foundset(object):
 
         # We hold the list of cached values and the state of completion in a list
         # idea: https://codereview.stackexchange.com/a/178780/151724
-        self._cache = [[], False]
+        self._cache: List[Any] = [[], False]
 
         # cache_generator will yield the values and handle the caching
         self._iter = cache_generator(self._records, self._cache)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         """Make foundset iterable.
 
         Returns iter for list of records already consumed from generator, or a chained object
@@ -43,7 +45,7 @@ class Foundset(object):
 
         return itertools.chain(self._cache[0], self._iter)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Record:
         """Return item at index in the iterator. If it's already cached, then return cached version.
         Otherwise consume until found.
 
@@ -59,13 +61,13 @@ class Foundset(object):
 
         return self._cache[0][index]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<Foundset consumed_records={} is_complete={}>'.format(
             len(self._cache[0]), self.is_complete
         )
 
     @property
-    def is_complete(self):
+    def is_complete(self) -> bool:
         """Returns True if all values have been consumed. Otherwise False."""
         return self._cache[1]
 
