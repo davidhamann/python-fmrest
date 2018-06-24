@@ -59,6 +59,10 @@ Or the latest master:
 pip install https://github.com/davidhamann/python-fmrest/archive/master.zip
 ```
 
+## Usage Examples
+
+Examples can be found in the [examples](https://github.com/davidhamann/python-fmrest/tree/master/examples) directory. Can't figure something out or feel an example is missing? Please file an issue.
+
 ## Local development / running tests
 
 Make sure to have requirements-dev.txt installed:
@@ -75,17 +79,23 @@ pytest tests/unit
 
 For running `tests/integration` you will need to have a real FileMaker Server and a test database.
 
-To have all tests run every time before a commit, please install the git hook:
+---
+
+For static type checking, please use `mypy`:
+
+```
+mypy fmrest
+```
+
+---
+
+To have all tests plus static type checks run every time before a commit, please install the git hook:
 
 ```
 cd hooks
 chmod +x install.sh pre-commit.sh run-tests.sh
 ./install.sh
 ```
-
-## Usage Examples
-
-Examples can be found in the [examples](https://github.com/davidhamann/python-fmrest/tree/master/examples) directory. Can't figure something out or feel an example is missing? Please file an issue.
 
 ## TO DO
 <a id="to-do"></a>
