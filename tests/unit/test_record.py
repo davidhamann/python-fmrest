@@ -3,10 +3,10 @@ from fmrest.record import Record
 
 class RecordTestCase(unittest.TestCase):
     """Record test suite"""
-    def setUp(self):
+    def setUp(self) -> None:
         pass
 
-    def test_key_value_mismatch_handling(self):
+    def test_key_value_mismatch_handling(self) -> None:
         """Test that Record cannot be initialized with a key-value length mismatch."""
         with self.assertRaises(ValueError):
             Record(['key1', 'key2'], [1])
@@ -14,7 +14,7 @@ class RecordTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             Record(['key1'], [1, 2])
 
-    def test_key_access(self):
+    def test_key_access(self) -> None:
         """Test that Record keys and values can be accessed."""
         assert_name = 'David'
         assert_drink = 'Coffee'
@@ -36,7 +36,7 @@ class RecordTestCase(unittest.TestCase):
         with self.assertRaises(AttributeError):
             record.city
 
-    def test_dirty_record_flagging(self):
+    def test_dirty_record_flagging(self) -> None:
         """Test that a record gets flagged as dirty when you change its value."""
         assert_name = 'David'
         assert_drink = 'Coffee'
@@ -60,7 +60,7 @@ class RecordTestCase(unittest.TestCase):
         record['name'] = 'Caspar'
         self.assertTrue(record.is_dirty)
 
-    def test_key_error_on_invalid_keys(self):
+    def test_key_error_on_invalid_keys(self) -> None:
         """Test that trying to set a non-existing key will raise an error."""
         record = Record(['name'], ['David'])
 
@@ -70,14 +70,14 @@ class RecordTestCase(unittest.TestCase):
         with self.assertRaises(KeyError):
             record['city'] = 'Hamburg'
 
-    def test_setting_class_slots(self):
+    def test_setting_class_slots(self) -> None:
         """Test that slots can be set w/o being intercepted and written to the modification dict."""
         record = Record(['name'], ['David'])
         record._keys = ['drink']
 
         self.assertIn('drink', record.keys())
 
-    def test_modification_tracking(self):
+    def test_modification_tracking(self) -> None:
         """Test that record modifications are tracked."""
         fake_modifications = {
             'drink': 'Dr. Pepper',
@@ -91,7 +91,7 @@ class RecordTestCase(unittest.TestCase):
 
         self.assertEqual(fake_modifications, record.modifications())
 
-    def test_setting_portal_data_error(self):
+    def test_setting_portal_data_error(self) -> None:
         """Test that attempting to set portal data raises an error.
         Once supported, this test can be replaced by a test, that verifies portal data can be set.
         """
@@ -100,7 +100,7 @@ class RecordTestCase(unittest.TestCase):
         with self.assertRaises(KeyError):
             record['portal_notes'] = 1234
 
-    def test_dict_conversion(self):
+    def test_dict_conversion(self) -> None:
         """Test that a record can be converted into a dict structure."""
         record = Record(
             ['name', 'drink', 'city', 'recordId', 'modId', 'portal_notes', 'portal_addresses'],
@@ -129,7 +129,7 @@ class RecordTestCase(unittest.TestCase):
         fake_dict.pop('modId')
         self.assertEqual(record.to_dict(ignore_portals=True, ignore_internal_ids=True), fake_dict)
 
-    def test_pop_values(self):
+    def test_pop_values(self) -> None:
         """Test that we can pop values from the record."""
 
         record = Record(['name', 'drink', 'city'], ['David', 'Coffee', 'Hamburg'])

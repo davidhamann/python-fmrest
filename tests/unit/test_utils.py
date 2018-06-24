@@ -4,10 +4,10 @@ from fmrest.utils import *
 
 class UtilsTestCase(unittest.TestCase):
     """Utils test suite"""
-    def setUp(self):
+    def setUp(self) -> None:
         pass
 
-    def test_portal_params(self):
+    def test_portal_params(self) -> None:
         """Test that portal param string is build correctly."""
         portals = [
             {
@@ -40,7 +40,7 @@ class UtilsTestCase(unittest.TestCase):
              'limit.Portal2': 51},
             params)
 
-    def test_build_script_params(self):
+    def test_build_script_params(self) -> None:
         """Test that simplified scripts object can be turned into FMSDAPI compatible one."""
 
         scripts_in = {
@@ -62,14 +62,14 @@ class UtilsTestCase(unittest.TestCase):
             build_script_params(scripts_in), scripts_out
         )
 
-    def test_build_script_params_partial(self):
+    def test_build_script_params_partial(self) -> None:
         """Test that only the script/param combos are returned that the user actually specified."""
         scripts_in = {'after': ['script_after', 'param_after']}
         scripts_out = {'script': 'script_after', 'script.param': 'param_after'}
 
         self.assertEqual(build_script_params(scripts_in), scripts_out)
 
-    def test_string_to_time_conversion(self):
+    def test_string_to_time_conversion(self) -> None:
         """Test that strings can be converted into their "guessed" original types."""
 
         self.assertEqual(
@@ -87,7 +87,7 @@ class UtilsTestCase(unittest.TestCase):
             'aa:bb:cc' #remains string
         )
 
-    def test_string_to_datetime_conversion(self):
+    def test_string_to_datetime_conversion(self) -> None:
         """Test that strings can be converted into their "guessed" original types."""
 
         self.assertEqual(
@@ -105,7 +105,7 @@ class UtilsTestCase(unittest.TestCase):
             datetime.datetime(1, 12, 1, 20, 45, 30)
         )
 
-    def test_string_to_number_conversion(self):
+    def test_string_to_number_conversion(self) -> None:
         """Test that strings can be converted into their "guessed" original types."""
 
         self.assertIsInstance(
@@ -123,7 +123,7 @@ class UtilsTestCase(unittest.TestCase):
             str
         )
 
-    def test_filename_from_url(self):
+    def test_filename_from_url(self) -> None:
         """Test that we can extract the file name from a FM RC URL."""
 
         # filename without extension

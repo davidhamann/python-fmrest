@@ -17,7 +17,7 @@ LAYOUT = os.getenv('LAYOUT', 'Contacts')
 
 class ServerTestCase(unittest.TestCase):
     """Server test suite"""
-    def setUp(self):
+    def setUp(self) -> None:
 
         # disable urlib warnings as we are testing with non verified certs
         requests.packages.urllib3.disable_warnings()
@@ -29,17 +29,17 @@ class ServerTestCase(unittest.TestCase):
                                   layout=LAYOUT,
                                   verify_ssl=False
                                  )
-    def test_login(self):
+    def test_login(self) -> None:
         """Test that login returns string token on success."""
         with self._fms as server:
             self.assertIsInstance(server.login(), str)
 
-    def test_logout(self):
+    def test_logout(self) -> None:
         """Test that server accepts logout request."""
         self._fms.login()
         self.assertTrue(self._fms.logout())
 
-    def test_create_get_delete_record(self):
+    def test_create_get_delete_record(self) -> None:
         """Create a record, get it, delete it. Assert all steps work in succession."""
         with self._fms as server:
             server.login()
@@ -57,7 +57,7 @@ class ServerTestCase(unittest.TestCase):
             deleted = server.delete_record(record_id)
             self.assertTrue(deleted)
 
-    def test_create_record_from_record_instance(self):
+    def test_create_record_from_record_instance(self) -> None:
         """Create a record from a new record instance."""
 
         record = Record(['name', 'drink'], ['David', 'Coffee'])
@@ -77,7 +77,7 @@ class ServerTestCase(unittest.TestCase):
     def test_edit_record(self):
         pass
 
-    def test_perform_scripts_with_find(self):
+    def test_perform_scripts_with_find(self) -> None:
         """Perform scripts and verify results."""
         expected_script_result = {
             'prerequest': [0, 'Output prerequest with param for prerequest'],
@@ -96,7 +96,7 @@ class ServerTestCase(unittest.TestCase):
 
             self.assertEqual(server.last_script_result, expected_script_result)
 
-    def test_perform_script_with_error(self):
+    def test_perform_script_with_error(self) -> None:
         """Perform a script that contains an error and check if error is returned."""
         expected_script_result = {'after': [3, None]} # unsupported script step
 
@@ -108,7 +108,7 @@ class ServerTestCase(unittest.TestCase):
 
             self.assertEqual(server.last_script_result, expected_script_result)
 
-    def test_delete_record_instance(self):
+    def test_delete_record_instance(self) -> None:
         with self._fms as server:
             server.login()
 
@@ -127,7 +127,7 @@ class ServerTestCase(unittest.TestCase):
             deletion_result = server.delete(record)
             self.assertTrue(deletion_result)
 
-    def test_duplicate_by_get_create(self):
+    def test_duplicate_by_get_create(self) -> None:
         """Test that we can pass a record instance from get_record directly to create().
 
         Note that this might not be a practical application in real life, as duplicating
@@ -147,7 +147,7 @@ class ServerTestCase(unittest.TestCase):
             # delete test record
             server.delete_record(duplicated_record_id)
 
-    def test_set_globals_to_access_related_values(self):
+    def test_set_globals_to_access_related_values(self) -> None:
         """Test that we can set a global value in the current session and then
         use it to access a related value
         """
@@ -167,7 +167,7 @@ class ServerTestCase(unittest.TestCase):
                 record['Notes_active::note'], 'This is a test note. Do not delete or change.'
             )
 
-    def test_get_record(self):
+    def test_get_record(self) -> None:
         """Test that get_record returns the Record value we are expecting."""
         with self._fms as server:
             server.login()
@@ -176,7 +176,7 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(fake_record.name, record.name)
             self.assertEqual(fake_record.drink, record.drink)
 
-    def test_upload_container(self):
+    def test_upload_container(self) -> None:
         """Test that uploading container data works without errors."""
         with self._fms as server:
             server.login()

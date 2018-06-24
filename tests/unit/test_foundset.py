@@ -4,10 +4,10 @@ from fmrest.record import Record
 
 class FoundsetTestCase(unittest.TestCase):
     """Foundset test suite"""
-    def setUp(self):
+    def setUp(self) -> None:
         pass
 
-    def test_index_access(self):
+    def test_index_access(self) -> None:
         """Test that values in generator are accesible via their index. Values are cached,
         so we are actually testing that we can access the cached list."""
         sample_gen = (record for record in [
@@ -23,7 +23,7 @@ class FoundsetTestCase(unittest.TestCase):
         with self.assertRaises(IndexError):
             foundset[3]
 
-    def test_list_builduing(self):
+    def test_list_builduing(self) -> None:
         """Test that building a list works with generated and cached values"""
 
         sample_gen = Foundset(i for i in [1, 2, 4, 5, 6, 7, 8])
