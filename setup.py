@@ -5,7 +5,8 @@ with open("README.md", "r") as ld:
 
 setup(
     name='python-fmrest',
-    version='1.0.2',
+    version='1.0.3',
+    python_requires='>=3.6',
     author='David Hamann',
     author_email='dh@davidhamann.de',
     description='python-fmrest is a wrapper around the FileMaker Data API.',
@@ -14,7 +15,7 @@ setup(
     url='https://github.com/davidhamann/python-fmrest',
     packages=['fmrest'],
     include_package_data=True,
-    install_requires=['requests'],
+    install_requires=['requests>=2'],
     classifiers=(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
