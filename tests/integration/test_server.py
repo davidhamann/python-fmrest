@@ -186,7 +186,7 @@ class ServerTestCase(unittest.TestCase):
 
             # now request a record and check that the relationship using this global
             # field can be established.
-            record = server.get_record(3) # can be any, as we use a global relationship
+            record = server.get_record(497) # can be any, as we use a global relationship
             self.assertEqual(
                 record['Notes_active::note'], 'This is a test note. Do not delete or change.'
             )
