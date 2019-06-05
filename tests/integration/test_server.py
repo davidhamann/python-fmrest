@@ -9,11 +9,12 @@ from fmrest.exceptions import RecordError
 # Settings for fmrest test database 'Contacts'
 # Running theses tests requires you to have a FileMaker Server running
 # (if you want to change credentials when hosting the test db, please use the env vars to do so)
-URL = os.getenv('URL', 'https://10.211.55.15')
+URL = os.getenv('URL', 'https://macvm2.local')
 ACCOUNT_NAME = os.getenv('ACCOUNT_NAME', 'admin')
 ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
 DATABASE = os.getenv('DATABASE', 'Contacts')
 LAYOUT = os.getenv('LAYOUT', 'Contacts')
+VERIFY_SSL = os.getenv('VERIFY_SSL', os.path.dirname(os.path.realpath(__file__)) + '/CA.pem')
 
 SECOND_DS = os.getenv('SECOND_DS', 'secondDataSource')
 SECOND_DS_ACCOUNT_NAME = os.getenv('SECOND_DS_ACCOUNT_NAME', 'admin2')
@@ -31,7 +32,7 @@ class ServerTestCase(unittest.TestCase):
                                   password=ACCOUNT_PASS,
                                   database=DATABASE,
                                   layout=LAYOUT,
-                                  verify_ssl=False
+                                  verify_ssl=VERIFY_SSL
                                  )
     def test_login(self) -> None:
         """Test that login returns string token on success."""
@@ -45,7 +46,7 @@ class ServerTestCase(unittest.TestCase):
                             password=ACCOUNT_PASS,
                             database=DATABASE,
                             layout=LAYOUT,
-                            verify_ssl=False,
+                            verify_ssl=VERIFY_SSL,
                             data_sources=[
                                 {'database': SECOND_DS,
                                  'username': SECOND_DS_ACCOUNT_NAME,
@@ -101,8 +102,38 @@ class ServerTestCase(unittest.TestCase):
     def test_edit_record(self):
         pass
 
+    def test_perform_script_single(self) -> None:
+        """Perform script via dedicated script route introduced in FMS18"""
+        param = 'input'
+        expected_script_result = 'Output with param ' + param
+        expected_return = (0, expected_script_result)
+
+        with self._fms as server:
+            server.login()
+            ps_res = server.perform_script('testScript', param)
+            ps_last_result = server.last_script_result
+
+        self.assertEqual(ps_res, expected_return)
+
+        # also check that last_script_result was updated
+        self.assertEqual(ps_last_result, {'after': [0, expected_script_result]})
+
+    def test_perform_script_single_with_error(self) -> None:
+        """Perform script w/ error via dedicated script route introduced in FMS18"""
+        expected_return = (3, None)
+
+        with self._fms as server:
+            server.login()
+            ps_res = server.perform_script('testScriptWithError')
+            ps_last_result = server.last_script_result
+
+        self.assertEqual(ps_res, expected_return)
+
+        # also check that last_script_result was updated
+        self.assertEqual(ps_last_result, {'after': [3, None]})
+
     def test_perform_scripts_with_find(self) -> None:
-        """Perform scripts and verify results."""
+        """Perform scripts for find route and verify results."""
         expected_script_result = {
             'prerequest': [0, 'Output prerequest with param for prerequest'],
             'presort': [0, 'Output presort with param for presort'],
@@ -120,8 +151,8 @@ class ServerTestCase(unittest.TestCase):
 
             self.assertEqual(server.last_script_result, expected_script_result)
 
-    def test_perform_script_with_error(self) -> None:
-        """Perform a script that contains an error and check if error is returned."""
+    def test_perform_script_find_with_error(self) -> None:
+        """Perform a script via find route that contains an error and check if error is returned."""
         expected_script_result = {'after': [3, None]} # unsupported script step
 
         with self._fms as server:

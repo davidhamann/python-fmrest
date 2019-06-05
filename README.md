@@ -18,12 +18,6 @@ Quick example:
 John Doe
 ```
 
-## NEW: FileMaker 17 compatible! ✨🎉
-
-This library is fully compatible with FileMaker 17. All new features (including script and container support) are supported and all API changes from v16 (renamed API paths, formats, etc.) are being handled.
-
-v16 support is dropped as the trial of the FMSDAPI automatically terminates in September 2018. If you still need the library for v16, please download/use the tagged release for v16. If you are having problems, please create a new issue.
-
 ## Supported Features
 
 All API paths can be served:
@@ -32,6 +26,7 @@ All API paths can be served:
 - record
 - find
 - global
+- script
 
 ## Feel free to contribute!
 

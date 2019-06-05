@@ -12,5 +12,6 @@ API_PATH = {
     'record':           '/fmi/data/v1/databases/{database}/layouts/{layout}/records',
     'record_action':    '/fmi/data/v1/databases/{database}/layouts/{layout}/records/{record_id}',
     'find':             '/fmi/data/v1/databases/{database}/layouts/{layout}/_find',
+    'script':           '/fmi/data/v1/databases/{database}/layouts/{layout}/script/{script_name}',
     'global':           '/fmi/data/v1/databases/{database}/globals'
 }

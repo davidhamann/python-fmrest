@@ -1,6 +1,6 @@
 """Server class for API connections"""
 import json
-import importlib
+import importlib.util
 import warnings
 from typing import List, Dict, Optional, Any, IO, Tuple, Union, Iterator
 import requests
@@ -35,7 +35,8 @@ class Server(object):
 
     def __init__(self, url: str, user: str,
                  password: str, database: str, layout: str,
-                 data_sources: Optional[List[Dict]] = None, verify_ssl: bool = True,
+                 data_sources: Optional[List[Dict]] = None,
+                 verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False) -> None:
         """Initialize the Server class.
 
@@ -55,11 +56,13 @@ class Server(object):
             Layout to work with. Can be changed between calls by setting the layout attribute again,
             e.g.: fmrest_instance.layout = 'new_layout'.
         data_sources : list, optional
-            List of dicts in format [{'database': 'db_file', 'username': 'admin', 'password': 'admin'}]
+            List of dicts in formatj
+                [{'database': 'db_file', 'username': 'admin', 'password': 'admin'}]
             Use this if for your actions you need to be authenticated to multiple DB files.
-        verify_ssl : bool, optional
+        verify_ssl : bool or str, optional
             Switch to set if certificate should be verified.
             Use False to disable verification. Default True.
+            Use string path to a root cert pem file, if you work with a custom CA.
         type_conversion : bool, optional
             If True, attempt to convert string values into their potential original types.
             In previous versions of the FileMaker Data API only strings were returned and there was
@@ -318,6 +321,33 @@ class Server(object):
         # pass response to foundset generator function. As we are only requesting one record though,
         # we only re-use the code and immediately consume the first (and only) record via next().
         return next(self._process_foundset_response(response))
+
+    def perform_script(self, name: str,
+                       param: Optional[str] = None) -> Tuple[Optional[int], Optional[str]]:
+        """Performs a script with the given name and parameter.
+
+        Returns tuple containing script error and result.
+
+        Parameters:
+        --------
+        name : str
+            The script name as defined in FileMaker Pro
+        param: str
+            Optional script parameter
+        """
+        path = API_PATH['script'].format(
+            database=self.database,
+            layout=self.layout,
+            script_name=name
+        )
+
+        response = self._call_filemaker('GET', path, params={'script.param': param})
+
+        script_error = response.get('scriptError', None)
+        script_error = int(script_error) if script_error else None
+        script_result = response.get('scriptResult', None)
+
+        return script_error, script_result
 
     def upload_container(self, record_id: int, field_name: str, file_: IO) -> bool:
         """Uploads the given binary data for the given record id and returns True on success.

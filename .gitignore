@@ -13,3 +13,4 @@ build/
 dist/
 examples/*.jpg
 tags
+*.pem
