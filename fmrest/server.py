@@ -721,7 +721,7 @@ class Server(object):
             values = list(field_data.values())
 
             portal_info = {}
-            for entry in record['portalDataInfo']:
+            for entry in record.get('portalDataInfo', []):
                 # a portal is identified by its object name, or, if not available, its TO name
                 portal_identifier = entry.get('portalObjectName', entry['table'])
                 portal_info[portal_identifier] = entry
@@ -736,6 +736,6 @@ class Server(object):
                           ) for row in rows
                 )
                 # add portal foundset to record
-                values.append(Foundset(related_records, portal_info[portal_name]))
+                values.append(Foundset(related_records, portal_info.get(portal_name, {})))
 
             yield Record(keys, values, type_conversion=self.type_conversion)
