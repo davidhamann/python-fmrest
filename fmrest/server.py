@@ -422,8 +422,9 @@ class Server(object):
             params.update(script_params)
 
         response = self._call_filemaker('GET', path, params=params)
+        info = response.get('dataInfo', {})
 
-        return Foundset(self._process_foundset_response(response))
+        return Foundset(self._process_foundset_response(response), info)
 
     def find(self, query: List[Dict[str, Any]],
              sort: Optional[List[Dict[str, str]]] = None,
@@ -494,8 +495,9 @@ class Server(object):
         data = {k:v for k, v in data.items() if v is not None}
 
         response = self._call_filemaker('POST', path, data=data)
+        info = response.get('dataInfo', {})
 
-        return Foundset(self._process_foundset_response(response))
+        return Foundset(self._process_foundset_response(response), info)
 
     def fetch_file(self, file_url: str,
                    stream: bool = False) -> Tuple[str, Optional[str], Optional[str], requests.Response]:
@@ -718,8 +720,14 @@ class Server(object):
             keys = list(field_data)
             values = list(field_data.values())
 
-            for portal, rows in record['portalData'].items():
-                keys.append(PORTAL_PREFIX + portal)
+            portal_info = {}
+            for entry in record['portalDataInfo']:
+                # a portal is identified by its object name, or, if not available, its TO name
+                portal_identifier = entry.get('portalObjectName', entry['table'])
+                portal_info[portal_identifier] = entry
+
+            for portal_name, rows in record['portalData'].items():
+                keys.append(PORTAL_PREFIX + portal_name)
 
                 # further delay creation of portal record instances
                 related_records = (
@@ -728,6 +736,6 @@ class Server(object):
                           ) for row in rows
                 )
                 # add portal foundset to record
-                values.append(Foundset(related_records))
+                values.append(Foundset(related_records, portal_info[portal_name]))
 
             yield Record(keys, values, type_conversion=self.type_conversion)

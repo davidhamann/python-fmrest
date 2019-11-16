@@ -28,3 +28,15 @@ class FoundsetTestCase(unittest.TestCase):
 
         sample_gen = Foundset(i for i in [1, 2, 4, 5, 6, 7, 8])
         self.assertEqual(list(zip(sample_gen, sample_gen)), list(zip(sample_gen, sample_gen)))
+
+    def test_info(self) -> None:
+        """Test that info section is available."""
+        info = {'portalObjectName': 'sample', 'database': 'DB', 'table': 'Sample', 'foundCount': 69, 'returnedCount': 50}
+        sample_gen = Foundset((i for i in [1, 2]), info)
+        self.assertEqual(sample_gen.info, info)
+
+    def test_empty_info(self) -> None:
+        """Test that a foundset without 'dataInfo' section returns an empty info dictionary"""
+
+        sample_gen = Foundset(i for i in [1, 2])
+        self.assertEqual(sample_gen.info, {})

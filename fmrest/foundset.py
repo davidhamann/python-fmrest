@@ -1,7 +1,7 @@
 """Foundset class for collections of Records"""
 
 import itertools
-from typing import Iterator, List, Any
+from typing import Iterator, List, Any, Dict
 from .utils import cache_generator
 from .record import Record
 
@@ -10,7 +10,7 @@ class Foundset(object):
 
     Foundsets are used for both find results and portal data (related records)
     """
-    def __init__(self, records: Iterator) -> None:
+    def __init__(self, records: Iterator, info: Dict = {}) -> None:
         """Initialize the Foundset class.
 
         The foundset is cached while being consumed, so that subsequent iterations are possible.
@@ -20,9 +20,13 @@ class Foundset(object):
         records : generator
             Generator of Record instances representing the records in a foundset or
             related records from a portal.
+        info : dictionary
+            Dictionary of information about the foundset. This is 1:1 the dictionary that
+            is delivered by FMS for any foundset.
         """
         self._records = records
         self._consumed = False
+        self._info = info
 
         # We hold the list of cached values and the state of completion in a list
         # idea: https://codereview.stackexchange.com/a/178780/151724
@@ -71,7 +75,10 @@ class Foundset(object):
         """Returns True if all values have been consumed. Otherwise False."""
         return self._cache[1]
 
-
+    @property
+    def info(self) -> Dict:
+        """Returns data that is contained in the dataInfo section of the FMS response."""
+        return self._info
 
     def to_df(self):
         """Returns a Pandas DataFrame of the Foundset. Must have Pandas installed.

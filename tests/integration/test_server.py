@@ -3,6 +3,7 @@ import os
 import unittest
 import requests
 import fmrest
+import json
 from fmrest.record import Record
 from fmrest.exceptions import RecordError
 
@@ -93,13 +94,29 @@ class ServerTestCase(unittest.TestCase):
 
         self.assertIsInstance(record_id, int)
 
+    def test_info(self) -> None:
+        """Test that foundset info property contains data as expected.
+
+        The executed script computes the expected information independently and is used to
+        make a comparision against the data computed by the FMDAPI"""
+        with self._fms as server:
+            server.login()
+            foundset = server.find(query=[{'id': 1}], scripts={'after': ['testScript_dataInfo', None]})
+            expected_info = json.loads(server.last_script_result['after'][1])
+
+        self.assertDictEqual(foundset.info, expected_info['general'])
+        self.assertDictEqual(foundset[0].portal_notes.info, expected_info['portal_notes'])
+
     def test_get_records(self):
+        # TODO
         pass
 
     def test_find(self):
+        # TODO
         pass
 
     def test_edit_record(self):
+        # TODO
         pass
 
     def test_perform_script_single(self) -> None:
