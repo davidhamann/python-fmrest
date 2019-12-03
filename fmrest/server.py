@@ -131,11 +131,11 @@ class Server(object):
         Note: this method is also called by __exit__
         """
 
-	# token is expected in endpoint for logout
+    # token is expected in endpoint for logout
         path = API_PATH['auth'].format(database=self.database, token=self._token)
 
-	# remove token, so that the Authorization header is not sent for logout
-	# (_call_filemaker() will update the headers)
+    # remove token, so that the Authorization header is not sent for logout
+    # (_call_filemaker() will update the headers)
         self._token = ''
         self._call_filemaker('DELETE', path)
 
@@ -614,7 +614,7 @@ class Server(object):
         request_data = json.dumps(data) if data else None
 
         # if we have a token, make sure it's included in the header
-	# if not, the Authorization header gets removed (necessary for example for logout)
+        # if not, the Authorization header gets removed (necessary for example for logout)
         self._update_token_header()
 
         response = request(method=method,
