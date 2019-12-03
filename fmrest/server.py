@@ -94,6 +94,7 @@ class Server(object):
         self._token: Optional[str] = None
         self._last_fm_error: Optional[int] = None
         self._last_script_result: Optional[Dict[str, List]] = None
+        self._last_data_info: Optional[Dict[str, Any]] = None
         self._headers: Dict[str, str] = {}
         self._set_content_type()
 
@@ -587,6 +588,23 @@ class Server(object):
             }
         return result
 
+    @property
+    def last_data_info(self) -> Dict:
+        """Returns the 'dataInfo' from the last query performed. This Dict has keys
+            - database : the name of the database called
+            - layout : the layout used
+            - table : the underlying table of the layout
+            - totalRecordCount : the number of records in the base table
+            - foundCount : the number of records which match the query performed
+            - returnedCount : the number of matching records which were returned
+        """
+        result: Dict = {}
+
+        if self._last_data_info:
+            result = self._last_data_info
+
+        return result
+
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
                         params: Optional[Dict] = None,
@@ -635,7 +653,9 @@ class Server(object):
         fms_response = response_data.get('response')
 
         self._update_script_result(fms_response)
+        self._last_data_info = fms_response.get('dataInfo', None)
         self._last_fm_error = fms_messages[0].get('code', -1)
+
         if self.last_error != 0:
             raise FileMakerError(self._last_fm_error,
                                  fms_messages[0].get('message', 'Unkown error'))
