@@ -37,7 +37,8 @@ class Server(object):
                  password: str, database: str, layout: str,
                  data_sources: Optional[List[Dict]] = None,
                  verify_ssl: Union[bool, str] = True,
-                 type_conversion: bool = False) -> None:
+                 type_conversion: bool = False,
+                 refresh_token: int = 0) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -72,6 +73,10 @@ class Server(object):
 
             Values will be converted into int, float, datetime, timedelta, string. This happens
             on a record level, not on a foundset level.
+        refresh_token : int, optional
+            If error 952 - invalid token - is returned should an attempt be made to refresh the token using the
+            supplied credentials? Set this to the number of retries which should be made before returning the
+            error to the calling code.
         """
 
         self.url = url
@@ -81,6 +86,8 @@ class Server(object):
         self.layout = layout
         self.data_sources = [] if data_sources is None else data_sources
         self.verify_ssl = verify_ssl
+        self.refresh_token = refresh_token
+        self.retry_count = 0
 
         self.type_conversion = type_conversion
         if type_conversion and not importlib.util.find_spec("dateutil"):
@@ -131,11 +138,11 @@ class Server(object):
         Note: this method is also called by __exit__
         """
 
-	# token is expected in endpoint for logout
+        # token is expected in endpoint for logout
         path = API_PATH['auth'].format(database=self.database, token=self._token)
 
-	# remove token, so that the Authorization header is not sent for logout
-	# (_call_filemaker() will update the headers)
+        # remove token, so that the Authorization header is not sent for logout
+        # (_call_filemaker() will update the headers)
         self._token = ''
         self._call_filemaker('DELETE', path)
 
@@ -614,7 +621,7 @@ class Server(object):
         request_data = json.dumps(data) if data else None
 
         # if we have a token, make sure it's included in the header
-	# if not, the Authorization header gets removed (necessary for example for logout)
+        # if not, the Authorization header gets removed (necessary for example for logout)
         self._update_token_header()
 
         response = request(method=method,
@@ -637,8 +644,17 @@ class Server(object):
         self._update_script_result(fms_response)
         self._last_fm_error = fms_messages[0].get('code', -1)
         if self.last_error != 0:
-            raise FileMakerError(self._last_fm_error,
-                                 fms_messages[0].get('message', 'Unkown error'))
+            if 952 == self.last_error and self.refresh_token > 0:
+                if self.retry_count <= self.refresh_token:
+                    self.retry_count += 1
+                    self.login()
+                    self._call_filemaker(method, path, data, params, **kwargs)
+                else:
+                    self.retry_count = 0
+
+            else:
+                raise FileMakerError(self._last_fm_error,
+                                     fms_messages[0].get('message', 'Unknown error'))
 
         self._set_content_type() # reset content type
 
