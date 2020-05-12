@@ -5,7 +5,8 @@ import requests
 import fmrest
 import json
 from fmrest.record import Record
-from fmrest.exceptions import RecordError
+from fmrest.const import FMSErrorCode
+from fmrest.exceptions import RecordError, FileMakerError
 
 # Settings for fmrest test database 'Contacts'
 # Running theses tests requires you to have a FileMaker Server running
@@ -16,6 +17,7 @@ ACCOUNT_PASS = os.getenv('ACCOUNT_PASS', 'admin')
 DATABASE = os.getenv('DATABASE', 'Contacts')
 LAYOUT = os.getenv('LAYOUT', 'Contacts')
 VERIFY_SSL = os.getenv('VERIFY_SSL', os.path.dirname(os.path.realpath(__file__)) + '/CA.pem')
+AUTO_RELOGIN = False
 
 SECOND_DS = os.getenv('SECOND_DS', 'secondDataSource')
 SECOND_DS_ACCOUNT_NAME = os.getenv('SECOND_DS_ACCOUNT_NAME', 'admin2')
@@ -33,7 +35,8 @@ class ServerTestCase(unittest.TestCase):
                                   password=ACCOUNT_PASS,
                                   database=DATABASE,
                                   layout=LAYOUT,
-                                  verify_ssl=VERIFY_SSL
+                                  verify_ssl=VERIFY_SSL,
+                                  auto_relogin=AUTO_RELOGIN
                                  )
     def test_login(self) -> None:
         """Test that login returns string token on success."""
@@ -258,3 +261,70 @@ class ServerTestCase(unittest.TestCase):
             )
 
             self.assertTrue(response)
+
+    def test_auto_relogin_off(self) -> None:
+        """Call get_record with an invalid token and test if token refresh
+        is not (!) performed when auto_relogin is off.
+        """
+        self._fms.login()
+        self._fms.auto_relogin = False
+        self._fms._token = 'invalid token'
+        with self.assertRaises(FileMakerError):
+            self._fms.get_record(1)
+        self.assertEqual(self._fms.last_error,
+                         FMSErrorCode.INVALID_DAPI_TOKEN.value)
+
+        self._fms.auto_relogin = AUTO_RELOGIN  # reset
+
+    def test_auto_relogin_on(self) -> None:
+        """Call get_record with an invalid token and test if token refresh is
+        performed.
+        """
+        fake_token = 'invalid token'
+        self._fms.login()
+        self._fms.auto_relogin = True
+        self._fms._token = fake_token
+        try:
+            self._fms.get_record(1)
+        except FileMakerError as exc:
+            self.fail(f'FileMakerError despite relogin; {exc}')
+
+        self.assertEqual(self._fms.last_error, FMSErrorCode.SUCCESS.value)
+        self.assertNotEqual(self._fms._token, fake_token)
+
+        self._fms.auto_relogin = AUTO_RELOGIN  # reset
+
+    def test_auto_relogin_on_and_fail(self) -> None:
+        """Call get_record with an invalid token and test if token refresh is
+        attempted and if potential error in the login will bubble up
+        correctly.
+        """
+        fake_token = 'invalid token'
+        self._fms.login()
+        self._fms.auto_relogin = True
+        self._fms._token = fake_token
+        self._fms.user = 'fake'  # make the relogin fail
+        with self.assertRaises(FileMakerError):
+            self._fms.get_record(1)
+
+        self.assertEqual(self._fms.last_error,
+                         FMSErrorCode.INVALID_USER_PASSWORD.value)
+
+        self._fms.auto_relogin = AUTO_RELOGIN  # reset
+
+    def test_auto_relogin_on_and_fail_in_original(self) -> None:
+        """Call get_record with an invalid token and test if token refresh is
+        attempted and if potential error in repeated original call bubbles
+        up correctly.
+        """
+        fake_token = 'invalid token'
+        self._fms.login()
+        self._fms.auto_relogin = True
+        self._fms._token = fake_token
+        with self.assertRaises(FileMakerError):
+            self._fms.get_record(10000)
+
+        self.assertEqual(self._fms.last_error,
+                         FMSErrorCode.RECORD_MISSING.value)
+
+        self._fms.auto_relogin = AUTO_RELOGIN  # reset

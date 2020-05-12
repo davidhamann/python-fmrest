@@ -3,9 +3,10 @@ import json
 import importlib.util
 import warnings
 from typing import List, Dict, Optional, Any, IO, Tuple, Union, Iterator
+from functools import wraps
 import requests
 from .utils import request, build_portal_params, build_script_params, filename_from_url
-from .const import API_PATH, PORTAL_PREFIX
+from .const import API_PATH, PORTAL_PREFIX, FMSErrorCode
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
 from .foundset import Foundset
@@ -37,7 +38,8 @@ class Server(object):
                  password: str, database: str, layout: str,
                  data_sources: Optional[List[Dict]] = None,
                  verify_ssl: Union[bool, str] = True,
-                 type_conversion: bool = False) -> None:
+                 type_conversion: bool = False,
+                 auto_relogin: bool = False) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -72,6 +74,10 @@ class Server(object):
 
             Values will be converted into int, float, datetime, timedelta, string. This happens
             on a record level, not on a foundset level.
+        auto_relogin : bool, optional
+            If True, tries to automatically get a new token (re-login) when a
+            request comes back with a 952 (invalid token) error. Defaults to
+            False.
         """
 
         self.url = url
@@ -81,6 +87,7 @@ class Server(object):
         self.layout = layout
         self.data_sources = [] if data_sources is None else data_sources
         self.verify_ssl = verify_ssl
+        self.auto_relogin = auto_relogin
 
         self.type_conversion = type_conversion
         if type_conversion and not importlib.util.find_spec("dateutil"):
@@ -107,6 +114,24 @@ class Server(object):
         return '<Server logged_in={} database={} layout={}>'.format(
             bool(self._token), self.database, self.layout
         )
+
+    def _with_auto_relogin(f):
+        @wraps(f)
+        def wrapper(self, *args, **kwargs):
+            if not self.auto_relogin:
+                return f(self, *args, **kwargs)
+
+            try:
+                return f(self, *args, **kwargs)
+            except FileMakerError:
+                if self.last_error == FMSErrorCode.INVALID_DAPI_TOKEN.value:
+                    # got invalid token error; try to get a new token
+                    self._token = None
+                    self.login()
+                    # ... now perform original request again
+                    return f(self, *args, **kwargs)
+                raise  # if another error occurred, re-raise the exception
+        return wrapper
 
     def login(self) -> Optional[str]:
         """Logs into FMServer and returns access token.
@@ -139,13 +164,14 @@ class Server(object):
         self._token = ''
         self._call_filemaker('DELETE', path)
 
-        return self.last_error == 0
+        return self.last_error == FMSErrorCode.SUCCESS.value
 
     def create(self, record: Record) -> Optional[int]:
         """Shortcut to create_record method. Takes record instance and calls create_record."""
         # TODO: support for handling foundset instances inside record instance
         return self.create_record(record.to_dict(ignore_portals=True, ignore_internal_ids=True))
 
+    @_with_auto_relogin
     def create_record(self, field_data: Dict[str, Any],
                       portals: Optional[Dict[str, Any]] = None,
                       scripts: Optional[Dict[str, List]] = None) -> Optional[int]:
@@ -191,6 +217,7 @@ class Server(object):
         mod_id = record.modification_id if validate_mod_id else None
         return self.edit_record(record.record_id, record.modifications(), mod_id)
 
+    @_with_auto_relogin
     def edit_record(self, record_id: int, field_data: Dict[str, Any],
                     mod_id: Optional[int] = None, portals: Optional[Dict[str, Any]] = None,
                     scripts: Optional[Dict[str, List]] = None) -> bool:
@@ -241,7 +268,7 @@ class Server(object):
 
         self._call_filemaker('PATCH', path, request_data)
 
-        return self.last_error == 0
+        return self.last_error == FMSErrorCode.SUCCESS.value
 
     def delete(self, record: Record) -> bool:
         """Shortcut to delete_record method. Takes record instance and calls delete_record."""
@@ -252,6 +279,7 @@ class Server(object):
 
         return self.delete_record(record_id)
 
+    @_with_auto_relogin
     def delete_record(self, record_id: int, scripts: Optional[Dict[str, List]] = None):
         """Deletes a record for the given record_id. Returns True on success.
 
@@ -275,8 +303,9 @@ class Server(object):
 
         self._call_filemaker('DELETE', path, params=params)
 
-        return self.last_error == 0
+        return self.last_error == FMSErrorCode.SUCCESS.value
 
+    @_with_auto_relogin
     def get_record(self, record_id: int, portals: Optional[List[Dict]] = None,
                    scripts: Optional[Dict[str, List]] = None,
                    layout: Optional[str] = None) -> Record:
@@ -322,6 +351,7 @@ class Server(object):
         # we only re-use the code and immediately consume the first (and only) record via next().
         return next(self._process_foundset_response(response))
 
+    @_with_auto_relogin
     def perform_script(self, name: str,
                        param: Optional[str] = None) -> Tuple[Optional[int], Optional[str]]:
         """Performs a script with the given name and parameter.
@@ -349,6 +379,7 @@ class Server(object):
 
         return script_error, script_result
 
+    @_with_auto_relogin
     def upload_container(self, record_id: int, field_name: str, file_: IO) -> bool:
         """Uploads the given binary data for the given record id and returns True on success.
         Parameters
@@ -370,8 +401,9 @@ class Server(object):
         self._set_content_type(False)
         self._call_filemaker('POST', path, files={'upload': file_})
 
-        return self.last_error == 0
+        return self.last_error == FMSErrorCode.SUCCESS.value
 
+    @_with_auto_relogin
     def get_records(self, offset: int = 1, limit: int = 100,
                     sort: Optional[List[Dict[str, str]]] = None,
                     portals: Optional[List[Dict[str, Any]]] = None,
@@ -426,6 +458,7 @@ class Server(object):
 
         return Foundset(self._process_foundset_response(response), info)
 
+    @_with_auto_relogin
     def find(self, query: List[Dict[str, Any]],
              sort: Optional[List[Dict[str, str]]] = None,
              offset: int = 1, limit: int = 100,
@@ -535,6 +568,7 @@ class Server(object):
                 response.headers.get('Content-Length'),
                 response)
 
+    @_with_auto_relogin
     def set_globals(self, globals_: Dict[str, Any]) -> bool:
         """Set global fields for the currently active session. Returns True on success.
 
@@ -554,7 +588,7 @@ class Server(object):
         data = {'globalFields': globals_}
 
         self._call_filemaker('PATCH', path, data=data)
-        return self.last_error == 0
+        return self.last_error == FMSErrorCode.SUCCESS.value
 
     @property
     def last_error(self) -> Optional[int]:
@@ -636,7 +670,7 @@ class Server(object):
 
         self._update_script_result(fms_response)
         self._last_fm_error = fms_messages[0].get('code', -1)
-        if self.last_error != 0:
+        if self.last_error != FMSErrorCode.SUCCESS.value:
             raise FileMakerError(self._last_fm_error,
                                  fms_messages[0].get('message', 'Unkown error'))
 
