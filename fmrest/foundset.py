@@ -10,7 +10,7 @@ class Foundset(object):
 
     Foundsets are used for both find results and portal data (related records)
     """
-    def __init__(self, records: Iterator, info: Dict = {}) -> None:
+    def __init__(self, records: Iterator, info: Dict = {}, *args, **kwargs) -> None:
         """Initialize the Foundset class.
 
         The foundset is cached while being consumed, so that subsequent iterations are possible.
@@ -24,6 +24,7 @@ class Foundset(object):
             Dictionary of information about the foundset. This is 1:1 the dictionary that
             is delivered by FMS for any foundset.
         """
+        super(Foundset, self).__init__(*args, **kwargs)
         self._records = records
         self._consumed = False
         self._info = info
