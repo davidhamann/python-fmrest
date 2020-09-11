@@ -12,7 +12,7 @@ class Record(object):
     __slots__ = ('_keys', '_values', '_in_portal', '_modifications')
 
     def __init__(self, keys: List[str], values: List[Any],
-                 in_portal: bool = False, type_conversion: bool = False) -> None:
+                 in_portal: bool = False, type_conversion: bool = False, *args, **kwargs) -> None:
         """Initialize the Record class.
 
         Parameters
@@ -31,7 +31,8 @@ class Record(object):
             type of a requested field value. Be cautious with this parameter!
             Values will be converted into int, float, datetime, timedelta, string.
         """
-
+        super(Record, self).__init__(*args, **kwargs)
+        
         self._keys = keys
 
         self._values: List[Any]
