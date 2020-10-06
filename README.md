@@ -92,6 +92,19 @@ chmod +x install.sh pre-commit.sh run-tests.sh
 ./install.sh
 ```
 
+## Bundling with PyInstaller
+
+If you are building an application that should be bundled with PyInstaller, please add a hook file to your project to indicate to `PyInstaller` to copy `python-fmrest`s metadata.
+
+**pyinstaller-hooks/hook-fmrest.py**
+
+```
+from PyInstaller.utils.hooks import copy_metadata
+datas = copy_metadata('python-fmrest')
+```
+
+Then add the path to the hooks directory to the `Analysis` section of your `.spec` file (in case you haven't done so for other hooks yet). For example: `hookspath=['./pyinstaller-hooks']`.
+
 ## TO DO
 <a id="to-do"></a>
 
