@@ -214,7 +214,7 @@ class Server(object):
 
     def edit(self, record: Record, validate_mod_id: bool = False) -> bool:
         """Shortcut to edit_record method. Takes (modified) record instance and calls edit_record"""
-        mod_id = record.modification_id if validate_mod_id else None
+        mod_id = record.modId if validate_mod_id else None
         return self.edit_record(record.record_id, record.modifications(), mod_id)
 
     @_with_auto_relogin
