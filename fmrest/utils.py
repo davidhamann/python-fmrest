@@ -1,5 +1,6 @@
 """Utility functions for fmrest"""
-from typing import List, Dict, Any, Iterator
+import aiohttp
+from typing import List, Dict, Any, Iterator, Optional
 import requests
 from .exceptions import RequestException
 from .const import TIMEOUT
@@ -26,7 +27,28 @@ def request(*args, **kwargs) -> requests.Response:
     try:
         return requests.request(*args, timeout=TIMEOUT, **kwargs)
     except Exception as ex:
+        raise
         raise RequestException(ex, args, kwargs) from None
+
+async def request_async(method: str,
+                        path: str,
+                        headers: Optional[Dict] = None,
+                        data: Optional[Dict] = None,
+                        params: Optional[Dict] = None,
+                        **kwargs) -> str:
+    """Async wrapper around requests library request call"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.request(method=method,
+                                       url=path,
+                                       headers=headers,
+                                       data=data,
+                                       params=params,
+                                       timeout=aiohttp.ClientTimeout(total=TIMEOUT),
+                                       **kwargs) as resp:
+                return await resp.text()
+    except Exception as ex:
+        raise RequestException(ex, None, kwargs) from None
 
 def build_portal_params(portals: List[Dict], names_as_string: bool = False) -> Dict[str, Any]:
     """Takes a list of dicts and returns a dict in a format as FMServer expects it.

@@ -32,7 +32,7 @@ class ResponseException(FMRestException):
     Re-raised after requests module exception
     """
 
-    def __init__(self, original_exception: Exception, response: requests.Response) -> None:
+    def __init__(self, original_exception: Exception, response: Any) -> None:
         """Parameters
         ----------
         original_exception
