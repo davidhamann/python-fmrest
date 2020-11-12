@@ -41,15 +41,15 @@ class ServerAsync(Server):
                                                    mod_id,
                                                    portals,
                                                    scripts)
-        response = await self._call_filemaker_async(**payload)
-        return self.edit_record_prepare_result(response)
+        await self._call_filemaker_async(**payload)
+        return self.edit_record_prepare_result()
 
     @Server._with_auto_relogin
     async def delete_record_async(self, record_id: int, scripts: Optional[Dict[str, List]] = None):
         payload = self.delete_record_prepare_payload(record_id,
                                                      scripts)
-        response = await self._call_filemaker_async(**payload)
-        return self.delete_record_prepare_response(response)
+        await self._call_filemaker_async(**payload)
+        return self.delete_record_prepare_response()
 
     @Server._with_auto_relogin
     async def get_record_async(self, record_id: int,
