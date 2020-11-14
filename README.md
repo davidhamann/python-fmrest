@@ -18,6 +18,24 @@ Quick example:
 John Doe
 ```
 
+asyncio example:
+```python
+>>> loop = asyncio.get_event_loop()
+>>> fms = fmrest.ServerAsync('https://your-server.com',
+                              user='admin',
+                              password='admin',
+                              database='Contacts',
+                              layout='Contacts')
+>>> fms.login()
+>>> record = loop.run_until_complete(fms.get_record_async(1))
+>>> record, delete_success = loop.run_until_complete(
+    asyncio.gather(
+        fms.get_record_async(1),
+        fms.delete_record_async(2),
+    ),
+)
+```
+
 ## Supported Features
 
 All API paths can be served:
