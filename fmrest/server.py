@@ -256,7 +256,7 @@ class Server(object):
 
         request_data: Dict = {'fieldData': field_data}
         if mod_id:
-            request_data['modId'] = mod_id
+            request_data['modId'] = str(mod_id)
 
         if portals:
             request_data['portalData'] = portals
