@@ -271,7 +271,10 @@ class Server(ServerABC):
             This is helpful, for example, if you want to limit the number of fields/portals being
             returned and have a dedicated response layout.
         """
-        payload = self.get_record_prepare_payload(*args, **kwargs)
+        payload = self.get_record_prepare_payload(record_id,
+                                                  portals,
+                                                  scripts,
+                                                  layout)
         response = self._call_filemaker(**payload)
         return self.get_record_prepare_result(response)
 
