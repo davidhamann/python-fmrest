@@ -4,7 +4,6 @@ import pycognito
 from .const import API_PATH
 from .server import Server
 
-
 class CloudServer(Server):
     """The CloudServer class provides access to a FileMaker Cloud database. This requires authenticating with a
      Claris ID via Amazon Cognito, as described in the FileMaker 19 Data API Guide:
@@ -12,6 +11,12 @@ class CloudServer(Server):
      https://help.claris.com/en/data-api-guide/
 
      Usage is otherwise identical to that of the standard fmrest Server class.
+
+     Please note that the values for cognito_userpool_id and cognito_client_id are the same for all FileMaker Cloud
+     connections at the time of writing, and thus have been provided as default values. These may, however, change in
+     the future, in which case new values may be obtained per instructions here:
+
+     https://help.claris.com/en/customer-console-help/content/create-fmid-token.html
      """
 
     def __init__(self,
@@ -20,8 +25,8 @@ class CloudServer(Server):
                  password: str,
                  database: str,
                  layout: str,
-                 cognito_userpool_id: str,
-                 cognito_client_id: str,
+                 cognito_userpool_id: str = 'us-west-2_NqkuZcXQY',
+                 cognito_client_id: str = '4l9rvl4mv5es1eep1qe97cautn',
                  data_sources: Optional[List[Dict]] = None,
                  verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False,
@@ -108,7 +113,7 @@ class CloudServer(Server):
         return response.get('token', None)
 
     def _update_token_header(self) -> Dict[str, str]:
-        """Override token header update method to use FMID token if set"""
+        """Override token header update method to use FMID token if set."""
 
         if self._fmid_token:
             self._headers['Authorization'] = 'FMID ' + self._fmid_token
