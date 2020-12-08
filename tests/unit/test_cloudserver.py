@@ -3,7 +3,6 @@ import unittest
 import json
 import mock
 import requests
-from botocore.exceptions import ClientError
 import pycognito
 import fmrest
 from fmrest.exceptions import FileMakerError, BadJSON
@@ -50,10 +49,24 @@ class CloudServerTestCase(unittest.TestCase):
                                        layout=LAYOUT
                                        )
 
-    def test_bad_cognito_credentials(self):
-        """Test that bad cognito credentials raises a botocore ClientError"""
-        with self.assertRaises(ClientError):
-            self._fms.login()
+    @mock.patch.object(requests, 'request')
+    @mock.patch('pycognito.aws_srp.AWSSRP.authenticate_user', _mock_authenticate_user)
+    @mock.patch('pycognito.Cognito.verify_token', _mock_verify_tokens)
+    def test_login(self, mock_request):
+        """Test that successful login returns a bearer token"""
+
+        mock_response = mock.Mock()
+        mock_response.json.return_value = {'response': {'token': 'dummytoken'},
+                                           'messages': [{'code': '0', 'message': 'OK'}]}
+        mock_request.return_value = mock_response
+
+        # Token should be None prior to login
+        self.assertIsNone(self._fms._token)
+
+        self._fms.login()
+
+        # After login, token should be a string
+        self.assertIsInstance(self._fms._token, str)
 
     @mock.patch.object(requests, 'request')
     @mock.patch('pycognito.aws_srp.AWSSRP.authenticate_user', _mock_authenticate_user)
