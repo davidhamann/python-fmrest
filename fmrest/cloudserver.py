@@ -1,6 +1,11 @@
 """Subclass of Server, specifically for connecting via the 'new' FileMaker Cloud"""
 from typing import Dict, List, Optional, Union
-import pycognito
+try:
+    import pycognito
+except ImportError:
+    _has_pycognito = False
+else:
+    _has_pycognito = True
 from .const import API_PATH
 from .server import Server
 
