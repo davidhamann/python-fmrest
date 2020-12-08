@@ -39,7 +39,8 @@ class Server(object):
                  data_sources: Optional[List[Dict]] = None,
                  verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False,
-                 auto_relogin: bool = False) -> None:
+                 auto_relogin: bool = False,
+		 *args, **kwargs) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -79,6 +80,7 @@ class Server(object):
             request comes back with a 952 (invalid token) error. Defaults to
             False.
         """
+	super(Server, self).__init__(*args, **kwargs)
 
         self.url = url
         self.user = user
