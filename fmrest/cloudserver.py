@@ -1,11 +1,13 @@
 """Subclass of Server, specifically for connecting via the 'new' FileMaker Cloud"""
 from typing import Dict, List, Optional, Union
+
 try:
     import pycognito
 except ImportError:
     _has_pycognito = False
 else:
     _has_pycognito = True
+
 from .const import API_PATH
 from .server import Server
 
@@ -84,6 +86,12 @@ class CloudServer(Server):
             request comes back with a 952 (invalid token) error. Defaults to
             False.
         """
+
+        if not _has_pycognito:
+            raise ImportError(
+                'Please install pycognito for Claris Cloud support. '
+                'You can do so with: pip install python-fmrest[cloud]'
+            )
 
         super().__init__(url,
                          user,

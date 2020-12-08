@@ -15,8 +15,10 @@ setup(
     url='https://github.com/davidhamann/python-fmrest',
     packages=['fmrest'],
     include_package_data=True,
-    install_requires=['requests>=2',
-                      'pycognito>=0.1.4'],
+    install_requires=['requests>=2'],
+    extras_require={
+        'cloud': ['pycognito>=0.1.4']
+    },
     classifiers=(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
