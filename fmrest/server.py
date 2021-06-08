@@ -2,7 +2,8 @@
 import json
 import importlib.util
 import warnings
-from typing import List, Dict, Optional, Any, IO, Tuple, Union, Iterator
+from typing import (List, Dict, Optional, Any, IO, Tuple, Union, Iterator,
+                    Callable)
 from functools import wraps
 import requests
 from .utils import request, build_portal_params, build_script_params, filename_from_url
@@ -39,7 +40,8 @@ class Server(object):
                  data_sources: Optional[List[Dict]] = None,
                  verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False,
-                 auto_relogin: bool = False) -> None:
+                 auto_relogin: bool = False,
+                 proxies: Optional[Dict] = None) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -78,6 +80,9 @@ class Server(object):
             If True, tries to automatically get a new token (re-login) when a
             request comes back with a 952 (invalid token) error. Defaults to
             False.
+        proxies : dict, optional
+            Pass requests through a proxy, configure like so:
+            { 'https': 'http://127.0.0.1:8080' }
         """
 
         self.url = url
@@ -88,6 +93,7 @@ class Server(object):
         self.data_sources = [] if data_sources is None else data_sources
         self.verify_ssl = verify_ssl
         self.auto_relogin = auto_relogin
+        self.proxies = proxies
 
         self.type_conversion = type_conversion
         if type_conversion and not importlib.util.find_spec("dateutil"):
@@ -648,7 +654,8 @@ class Server(object):
         request_data = json.dumps(data) if data else None
 
         # if we have a token, make sure it's included in the header
-	# if not, the Authorization header gets removed (necessary for example for logout)
+        # if not, the Authorization header gets removed (necessary for example
+        # for logout)
         self._update_token_header()
 
         response = request(method=method,
@@ -657,8 +664,8 @@ class Server(object):
                            data=request_data,
                            verify=self.verify_ssl,
                            params=params,
-                           **kwargs
-                          )
+                           proxies=self.proxies,
+                           **kwargs)
 
         try:
             response_data = response.json()
