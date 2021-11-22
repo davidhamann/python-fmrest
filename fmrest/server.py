@@ -566,8 +566,8 @@ class Server(object):
         response = request(method='get',
                            url=file_url,
                            verify=self.verify_ssl,
-                           stream=stream
-                          )
+                           stream=stream,
+                           proxies=self.proxies)
 
         return (name,
                 response.headers.get('Content-Type'),
