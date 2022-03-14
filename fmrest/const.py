@@ -9,6 +9,13 @@ PORTAL_PREFIX = 'portal_'
 TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
 
 API_PATH = {
+    'meta': {
+        'productinfo':      '/fmi/data/v1/productInfo',
+        'databasenames':    '/fmi/data/v1/databases',
+        'layoutnames':      '/fmi/data/v1/databases/{database}/layouts',
+        'scriptnames':      '/fmi/data/v1/databases/{database}/scripts',
+        'layoutmetadata':   '/fmi/data/v1/databases/{database}/layouts/{layout}'
+    },
     'auth':             '/fmi/data/v1/databases/{database}/sessions/{token}',
     'record':           '/fmi/data/v1/databases/{database}/layouts/{layout}/records',
     'record_action':    '/fmi/data/v1/databases/{database}/layouts/{layout}/records/{record_id}',
