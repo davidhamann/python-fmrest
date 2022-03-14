@@ -627,6 +627,31 @@ class Server(object):
             }
         return result
 
+#    'meta': {
+#        'productinfo':      '/fmi/data/v1/productInfo',
+#        'databasenames':    '/fmi/data/v1/databases',
+#        'layoutnames':      '/fmi/data/v1/databases/{database}/layouts',
+#        'scriptnames':      '/fmi/data/v1/databases/{database}/scripts',
+#        'layoutmetadata':   '/fmi/data/v1/databases/{database}/layouts/{layout}'
+#    },
+
+    @_with_auto_relogin
+    def get_layoutmetadata(self) -> Dict:
+        """Fetches layout metadata and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['layoutmetadata'].format(
+            database=self.database,
+            layout=self.layout
+	)
+
+        response = self._call_filemaker('GET', path)
+
+        return response
+
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
                         params: Optional[Dict] = None,
