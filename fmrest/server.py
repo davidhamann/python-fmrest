@@ -635,7 +635,6 @@ class Server(object):
 #        'layoutmetadata':   '/fmi/data/v1/databases/{database}/layouts/{layout}'
 #    },
 
-    @_with_auto_relogin
     def get_productinfo(self) -> Dict:
         """Fetches product info and returns Dict instance
 
@@ -649,7 +648,7 @@ class Server(object):
 
         return response
 
-    @_with_auto_relogin
+    #@_with_auto_relogin # FMS may convey all available databases without prior login...
     def get_databasenames(self) -> Dict:
         """Fetches database names and returns Dict instance
 
