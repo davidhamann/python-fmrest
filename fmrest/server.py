@@ -636,6 +636,66 @@ class Server(object):
 #    },
 
     @_with_auto_relogin
+    def get_productinfo(self) -> Dict:
+        """Fetches product info and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['productinfo']
+
+        response = self._call_filemaker('GET', path)
+
+        return response
+
+    @_with_auto_relogin
+    def get_databasenames(self) -> Dict:
+        """Fetches database names and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['databasenames']
+
+        response = self._call_filemaker('GET', path)
+
+        return response
+
+    @_with_auto_relogin
+    def get_layoutnames(self) -> Dict:
+        """Fetches database layout names and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['layoutnames'].format(
+            database=self.database
+	)
+
+        response = self._call_filemaker('GET', path)
+
+        return response
+
+    @_with_auto_relogin
+    def get_scriptnames(self) -> Dict:
+        """Fetches database script names and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['scriptnames'].format(
+            database=self.database
+	)
+
+        response = self._call_filemaker('GET', path)
+
+        return response
+
+    @_with_auto_relogin
     def get_layoutmetadata(self) -> Dict:
         """Fetches layout metadata and returns Dict instance
 
