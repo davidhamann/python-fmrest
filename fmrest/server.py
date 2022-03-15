@@ -627,14 +627,6 @@ class Server(object):
             }
         return result
 
-#    'meta': {
-#        'productinfo':      '/fmi/data/v1/productInfo',
-#        'databasenames':    '/fmi/data/v1/databases',
-#        'layoutnames':      '/fmi/data/v1/databases/{database}/layouts',
-#        'scriptnames':      '/fmi/data/v1/databases/{database}/scripts',
-#        'layoutmetadata':   '/fmi/data/v1/databases/{database}/layouts/{layout}'
-#    },
-
     @_with_auto_relogin
     def get_productinfo(self) -> Dict:
         """Fetches product info and returns Dict instance
