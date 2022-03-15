@@ -661,7 +661,8 @@ class Server(object):
 
         response = self._call_filemaker('GET', path)
 
-        return response
+        # return tuple of databases?
+	return response
 
     @_with_auto_relogin
     def get_layoutnames(self) -> Dict:
@@ -677,6 +678,7 @@ class Server(object):
 
         response = self._call_filemaker('GET', path)
 
+        # return tuple of database layouts?
         return response
 
     @_with_auto_relogin
@@ -693,6 +695,7 @@ class Server(object):
 
         response = self._call_filemaker('GET', path)
 
+        # return tuple of database scripts?
         return response
 
     @_with_auto_relogin
