@@ -162,11 +162,11 @@ class Server(object):
         Note: this method is also called by __exit__
         """
 
-	# token is expected in endpoint for logout
+        # token is expected in endpoint for logout
         path = API_PATH['auth'].format(database=self.database, token=self._token)
 
-	# remove token, so that the Authorization header is not sent for logout
-	# (_call_filemaker() will update the headers)
+        # remove token, so that the Authorization header is not sent for logout
+        # (_call_filemaker() will update the headers)
         self._token = ''
         self._call_filemaker('DELETE', path)
 
@@ -662,8 +662,8 @@ class Server(object):
         response = self._call_filemaker('GET', path)
 
         # return list of "databases"?
-	#return response.get('databases')
-	return response
+        #return response.get('databases')
+        return response
 
     @_with_auto_relogin
     def get_layoutnames(self) -> Dict:
@@ -675,12 +675,12 @@ class Server(object):
         """
         path = API_PATH['meta']['layoutnames'].format(
             database=self.database
-	)
+        )
 
         response = self._call_filemaker('GET', path)
 
         # return list of database "layouts"?
-	#return response.get('layouts')
+        #return response.get('layouts')
         return response
 
     @_with_auto_relogin
@@ -693,12 +693,12 @@ class Server(object):
         """
         path = API_PATH['meta']['scriptnames'].format(
             database=self.database
-	)
+        )
 
         response = self._call_filemaker('GET', path)
 
         # return list of database "scripts"?
-	#return response.get('scripts')
+        #return response.get('scripts')
         return response
 
     @_with_auto_relogin
@@ -712,7 +712,7 @@ class Server(object):
         path = API_PATH['meta']['layoutmetadata'].format(
             database=self.database,
             layout=self.layout
-	)
+        )
 
         response = self._call_filemaker('GET', path)
 
