@@ -627,7 +627,6 @@ class Server(object):
             }
         return result
 
-    @_with_auto_relogin
     def get_productinfo(self) -> Dict:
         """Fetches product info and returns Dict instance
 
@@ -637,11 +636,17 @@ class Server(object):
         """
         path = API_PATH['meta']['productinfo']
 
+        # There is never any auth for retrieving the producInfo, 
+        # so let's keep the Auth header 'clean'...
+        self._headers.pop('Authorization', None)
+
         response = self._call_filemaker('GET', path)
+
+        # Reset the Auth header to its previous state
+        self._update_token_header()
 
         return response
 
-    @_with_auto_relogin
     def get_databasenames(self) -> Dict:
         """Fetches database names and returns Dict instance
 
@@ -651,7 +656,24 @@ class Server(object):
         """
         path = API_PATH['meta']['databasenames']
 
+        # Looking at https://[your_fms]]/fmi/data/apidoc/#operation/dbNames:
+        # We must NOT send the _token_, irrespective of the login state, 
+        # so let's keep the Auth header 'clean'...
+        self._headers.pop('Authorization', None)
+
+        # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
+        # = > If Filter Databases in Client Applications is disabled, 
+        # no Authorization header is required.
         response = self._call_filemaker('GET', path)
+
+        # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
+        # If Filter Databases in Client Applications is enabled:
+        # Authorization: a base64-encoded string representing the account name 
+        # and password to use to log in to the hosted database. 
+        #response = self._call_filemaker('GET', path, auth=(self.user, self.password))
+
+        # Reset the Auth header to its previous state
+        self._update_token_header()
 
         return response
 
