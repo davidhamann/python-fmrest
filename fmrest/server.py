@@ -627,44 +627,47 @@ class Server(object):
             }
         return result
 
-    def get_productinfo(self) -> Dict:
+    def get_product_info(self) -> Dict:
         """Fetches product info and returns Dict instance
 
         Parameters
         -----------
         none
         """
-        path = API_PATH['meta']['productinfo']
+        path = API_PATH['meta']['product']
 
         # There is never any auth for retrieving the producInfo, 
         # so let's keep the Auth header 'clean'...
-        self._headers.pop('Authorization', None)
+        #self._headers.pop('Authorization', None)
 
+        # _call_filemaker() will reinstate the Auth header 
+        # as long as _token is set
         response = self._call_filemaker('GET', path)
 
         # Reset the Auth header to its previous state
-        self._update_token_header()
+        # but _call_filemaker does this anyway...
+        #self._update_token_header()
 
-        return response
+        return response.get('productInfo', None)
 
-    def get_databasenames(self) -> Dict:
+    def get_databases(self) -> Dict:
         """Fetches database names and returns Dict instance
 
         Parameters
         -----------
         none
         """
-        path = API_PATH['meta']['databasenames']
+        path = API_PATH['meta']['databases']
 
         # Looking at https://[your_fms]]/fmi/data/apidoc/#operation/dbNames:
         # We must NOT send the _token_, irrespective of the login state, 
         # so let's keep the Auth header 'clean'...
-        self._headers.pop('Authorization', None)
+        #self._headers.pop('Authorization', None)
 
         # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
         # = > If Filter Databases in Client Applications is disabled, 
         # no Authorization header is required.
-        response = self._call_filemaker('GET', path)
+        #response = self._call_filemaker('GET', path)
 
         # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
         # If Filter Databases in Client Applications is enabled:
@@ -672,59 +675,66 @@ class Server(object):
         # and password to use to log in to the hosted database. 
         #response = self._call_filemaker('GET', path, auth=(self.user, self.password))
 
-        # Reset the Auth header to its previous state
-        self._update_token_header()
+        # See discussion here: https://github.com/davidhamann/python-fmrest/pull/46#issuecomment-1079328531
+        # "This [will] eventually overwrite the Authorization header with the data provided in the auth 
+        # argument (a comment there might be good as it could lead to confusion since we're adding an 
+        # Authorization header, but requests adds one as well)."
 
-        return response
+        response = self._call_filemaker('GET', path, auth=(self.user, self.password))
+
+        # Reset the Auth header to its previous state
+        #self._update_token_header()
+
+        return response.get('databases', None)
 
     @_with_auto_relogin
-    def get_layoutnames(self) -> Dict:
+    def get_layouts(self) -> Dict:
         """Fetches database layout names and returns Dict instance
 
         Parameters
         -----------
         none
         """
-        path = API_PATH['meta']['layoutnames'].format(
+        path = API_PATH['meta']['layouts'].format(
             database=self.database
         )
 
         response = self._call_filemaker('GET', path)
 
-        return response
+        return response.get('layouts', None)
 
     @_with_auto_relogin
-    def get_scriptnames(self) -> Dict:
+    def get_scripts(self) -> Dict:
         """Fetches database script names and returns Dict instance
 
         Parameters
         -----------
         none
         """
-        path = API_PATH['meta']['scriptnames'].format(
+        path = API_PATH['meta']['scripts'].format(
             database=self.database
         )
 
         response = self._call_filemaker('GET', path)
 
-        return response
+        return response.get('scripts', None)
 
     @_with_auto_relogin
-    def get_layoutmetadata(self) -> Dict:
+    def get_layout(self) -> Dict:
         """Fetches layout metadata and returns Dict instance
 
         Parameters
         -----------
         none
         """
-        path = API_PATH['meta']['layoutmetadata'].format(
+        path = API_PATH['meta']['layouts'] + f'/{layout}'.format(
             database=self.database,
             layout=self.layout
         )
 
         response = self._call_filemaker('GET', path)
 
-        return response
+        return response.get('fieldMetaData', None)
 
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
