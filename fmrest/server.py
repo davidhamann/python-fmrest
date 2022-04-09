@@ -636,17 +636,7 @@ class Server(object):
         """
         path = API_PATH['meta']['product']
 
-        # There is never any auth for retrieving the producInfo, 
-        # so let's keep the Auth header 'clean'...
-        #self._headers.pop('Authorization', None)
-
-        # _call_filemaker() will reinstate the Auth header 
-        # as long as _token is set
         response = self._call_filemaker('GET', path)
-
-        # Reset the Auth header to its previous state
-        # but _call_filemaker does this anyway...
-        #self._update_token_header()
 
         return response.get('productInfo', None)
 
@@ -658,11 +648,6 @@ class Server(object):
         none
         """
         path = API_PATH['meta']['databases']
-
-        # Looking at https://[your_fms]]/fmi/data/apidoc/#operation/dbNames:
-        # We must NOT send the _token_, irrespective of the login state, 
-        # so let's keep the Auth header 'clean'...
-        #self._headers.pop('Authorization', None)
 
         # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
         # = > If Filter Databases in Client Applications is disabled, 
@@ -681,9 +666,6 @@ class Server(object):
         # Authorization header, but requests adds one as well)."
 
         response = self._call_filemaker('GET', path, auth=(self.user, self.password))
-
-        # Reset the Auth header to its previous state
-        #self._update_token_header()
 
         return response.get('databases', None)
 
@@ -727,10 +709,10 @@ class Server(object):
         -----------
         none
         """
-        path = API_PATH['meta']['layouts'] + f'/{layout}'.format(
+        path = API_PATH['meta']['layouts'].format(
             database=self.database,
             layout=self.layout
-        )
+        ) + f'/{self.layout}'
 
         response = self._call_filemaker('GET', path)
 
