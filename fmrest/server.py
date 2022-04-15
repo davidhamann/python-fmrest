@@ -162,11 +162,11 @@ class Server(object):
         Note: this method is also called by __exit__
         """
 
-	# token is expected in endpoint for logout
+        # token is expected in endpoint for logout
         path = API_PATH['auth'].format(database=self.database, token=self._token)
 
-	# remove token, so that the Authorization header is not sent for logout
-	# (_call_filemaker() will update the headers)
+        # remove token, so that the Authorization header is not sent for logout
+        # (_call_filemaker() will update the headers)
         self._token = ''
         self._call_filemaker('DELETE', path)
 
@@ -626,6 +626,97 @@ class Server(object):
                 k:[int(v[0]), v[1]] for k, v in self._last_script_result.items() if v[0] is not None
             }
         return result
+
+    def get_product_info(self) -> Dict:
+        """Fetches product info and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['product']
+
+        response = self._call_filemaker('GET', path)
+
+        return response.get('productInfo', None)
+
+    def get_databases(self) -> Dict:
+        """Fetches database names and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['databases']
+
+        # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
+        # = > If Filter Databases in Client Applications is disabled, 
+        # no Authorization header is required.
+        #response = self._call_filemaker('GET', path)
+
+        # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
+        # If Filter Databases in Client Applications is enabled:
+        # Authorization: a base64-encoded string representing the account name 
+        # and password to use to log in to the hosted database. 
+        #response = self._call_filemaker('GET', path, auth=(self.user, self.password))
+
+        # See discussion here: https://github.com/davidhamann/python-fmrest/pull/46#issuecomment-1079328531
+        # "This [will] eventually overwrite the Authorization header with the data provided in the auth 
+        # argument (a comment there might be good as it could lead to confusion since we're adding an 
+        # Authorization header, but requests adds one as well)."
+
+        response = self._call_filemaker('GET', path, auth=(self.user, self.password))
+
+        return response.get('databases', None)
+
+    @_with_auto_relogin
+    def get_layouts(self) -> Dict:
+        """Fetches database layout names and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['layouts'].format(
+            database=self.database
+        )
+
+        response = self._call_filemaker('GET', path)
+
+        return response.get('layouts', None)
+
+    @_with_auto_relogin
+    def get_scripts(self) -> Dict:
+        """Fetches database script names and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['scripts'].format(
+            database=self.database
+        )
+
+        response = self._call_filemaker('GET', path)
+
+        return response.get('scripts', None)
+
+    @_with_auto_relogin
+    def get_layout(self) -> Dict:
+        """Fetches layout metadata and returns Dict instance
+
+        Parameters
+        -----------
+        none
+        """
+        path = API_PATH['meta']['layouts'].format(
+            database=self.database,
+            layout=self.layout
+        ) + f'/{self.layout}'
+
+        response = self._call_filemaker('GET', path)
+
+        return response.get('fieldMetaData', None)
 
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
