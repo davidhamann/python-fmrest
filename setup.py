@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as ld:
 
 setup(
     name='python-fmrest',
-    version='1.5',
+    version='1.5.1',
     python_requires='>=3.6',
     author='David Hamann',
     author_email='dh@davidhamann.de',

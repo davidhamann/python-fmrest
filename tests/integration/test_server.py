@@ -36,8 +36,9 @@ class ServerTestCase(unittest.TestCase):
                                   database=DATABASE,
                                   layout=LAYOUT,
                                   verify_ssl=VERIFY_SSL,
-                                  auto_relogin=AUTO_RELOGIN
-                                 )
+                                  auto_relogin=AUTO_RELOGIN,
+                                  api_version='v1')
+
     def test_login(self) -> None:
         """Test that login returns string token on success."""
         with self._fms as server:
@@ -51,6 +52,7 @@ class ServerTestCase(unittest.TestCase):
                             database=DATABASE,
                             layout=LAYOUT,
                             verify_ssl=VERIFY_SSL,
+                            api_version='v1',
                             data_sources=[
                                 {'database': SECOND_DS,
                                  'username': SECOND_DS_ACCOUNT_NAME,

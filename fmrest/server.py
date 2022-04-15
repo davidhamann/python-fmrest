@@ -2,15 +2,17 @@
 import json
 import importlib.util
 import warnings
-from typing import (List, Dict, Optional, Any, IO, Tuple, Union, Iterator,
-                    Callable)
+from typing import List, Dict, Optional, Any, IO, Tuple, Union, Iterator
 from functools import wraps
 import requests
-from .utils import request, build_portal_params, build_script_params, filename_from_url
-from .const import API_PATH, PORTAL_PREFIX, FMSErrorCode
+from .utils import (request, build_portal_params, build_script_params,
+                    filename_from_url, PlaceholderDict)
+from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_PATH_PREFIX,
+                    API_PATH)
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
 from .foundset import Foundset
+
 
 class Server(object):
     """The server class provides easy access to the FileMaker Data API
@@ -22,7 +24,8 @@ class Server(object):
                     user='db user name',
                     password='db password',
                     database='db name',
-                    layout='db layout'
+                    layout='db layout',
+                    api_version='v1'
                    )
         fms.login()
         fms.get_record(1)
@@ -41,7 +44,8 @@ class Server(object):
                  verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False,
                  auto_relogin: bool = False,
-                 proxies: Optional[Dict] = None) -> None:
+                 proxies: Optional[Dict] = None,
+                 api_version: Optional[str] = None) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -83,6 +87,10 @@ class Server(object):
         proxies : dict, optional
             Pass requests through a proxy, configure like so:
             { 'https': 'http://127.0.0.1:8080' }
+        api_version : str, optional
+            Configure which version of the data API should be queried (e.g. v1)
+            It is recommended to set the version explicitly to prevent
+            potential future breaking changes.
         """
 
         self.url = url
@@ -94,6 +102,14 @@ class Server(object):
         self.verify_ssl = verify_ssl
         self.auto_relogin = auto_relogin
         self.proxies = proxies
+
+        if not api_version:
+            warnings.warn('No api_version given. Defaulting to v1.')
+            self.api_version = 'v1'
+        elif api_version not in API_VERSIONS:
+            raise ValueError(f'Invalid API version. Choose one of {API_VERSIONS}')
+        else:
+            self.api_version = api_version
 
         self.type_conversion = type_conversion
         if type_conversion and not importlib.util.find_spec("dateutil"):
@@ -120,6 +136,20 @@ class Server(object):
         return '<Server logged_in={} database={} layout={}>'.format(
             bool(self._token), self.database, self.layout
         )
+
+    def _get_api_path(self, resource: str) -> str:
+        resource_path = resource.split('.')
+        if len(resource_path) > 1:
+            if resource_path[0] == 'meta':
+                path = API_PATH['meta'][resource_path[1]]
+            else:
+                raise ValueError('Invalid API path')
+        else:
+            path = API_PATH[resource_path[0]]
+
+        return (API_PATH_PREFIX.format(version=self.api_version) +
+                path.format_map(PlaceholderDict(database=self.database,
+                                                layout=self.layout)))
 
     def _with_auto_relogin(f):
         @wraps(f)
@@ -148,7 +178,7 @@ class Server(object):
         Note that OAuth is currently not supported.
         """
 
-        path = API_PATH['auth'].format(database=self.database, token='')
+        path = self._get_api_path('auth').format(token='')
         data = {'fmDataSource': self.data_sources}
 
         response = self._call_filemaker('POST', path, data, auth=(self.user, self.password))
@@ -163,7 +193,7 @@ class Server(object):
         """
 
         # token is expected in endpoint for logout
-        path = API_PATH['auth'].format(database=self.database, token=self._token)
+        path = self._get_api_path('auth').format(token=self._token)
 
         # remove token, so that the Authorization header is not sent for logout
         # (_call_filemaker() will update the headers)
@@ -199,10 +229,7 @@ class Server(object):
                 {'TO::field': 'another record'}
             ]
         """
-        path = API_PATH['record'].format(
-            database=self.database,
-            layout=self.layout,
-        )
+        path = self._get_api_path('record')
 
         request_data: Dict = {'fieldData': field_data}
         if portals:
@@ -254,11 +281,7 @@ class Server(object):
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
         """
-        path = API_PATH['record_action'].format(
-            database=self.database,
-            layout=self.layout,
-            record_id=record_id
-        )
+        path = self._get_api_path('record_action').format(record_id=record_id)
 
         request_data: Dict = {'fieldData': field_data}
         if mod_id:
@@ -299,11 +322,7 @@ class Server(object):
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
         """
-        path = API_PATH['record_action'].format(
-            database=self.database,
-            layout=self.layout,
-            record_id=record_id
-        )
+        path = self._get_api_path('record_action').format(record_id=record_id)
 
         params = build_script_params(scripts) if scripts else None
 
@@ -337,11 +356,7 @@ class Server(object):
             This is helpful, for example, if you want to limit the number of fields/portals being
             returned and have a dedicated response layout.
         """
-        path = API_PATH['record_action'].format(
-            database=self.database,
-            layout=self.layout,
-            record_id=record_id
-        )
+        path = self._get_api_path('record_action').format(record_id=record_id)
 
         params = build_portal_params(portals, True) if portals else {}
         params['layout.response'] = layout
@@ -371,11 +386,7 @@ class Server(object):
         param: str
             Optional script parameter
         """
-        path = API_PATH['script'].format(
-            database=self.database,
-            layout=self.layout,
-            script_name=name
-        )
+        path = self._get_api_path('script').format(script_name=name)
 
         response = self._call_filemaker('GET', path, params={'script.param': param})
 
@@ -397,11 +408,8 @@ class Server(object):
         file_ : fileobj
             File object as returned by open() in binary mode.
         """
-        path = API_PATH['record_action'].format(
-            database=self.database,
-            layout=self.layout,
-            record_id=record_id
-        ) + '/containers/' + field_name + '/1'
+        path = self._get_api_path('record_action').format(record_id=record_id)
+        path += '/containers/' + field_name + '/1'
 
         # requests library handles content type for multipart/form-data incl. boundary
         self._set_content_type(False)
@@ -441,10 +449,7 @@ class Server(object):
             This is helpful, for example, if you want to limit the number of fields/portals being
             returned and have a dedicated response layout.
         """
-        path = API_PATH['record'].format(
-            database=self.database,
-            layout=self.layout
-        )
+        path = self._get_api_path('record')
 
         params = build_portal_params(portals, True) if portals else {}
         params['_offset'] = offset
@@ -507,10 +512,7 @@ class Server(object):
             This is helpful, for example, if you want to limit the number of fields/portals being
             returned and have a dedicated response layout.
         """
-        path = API_PATH['find'].format(
-            database=self.database,
-            layout=self.layout
-        )
+        path = self._get_api_path('find')
 
         data = {
             'query': query,
@@ -589,7 +591,7 @@ class Server(object):
             Example:
                 { 'Table::myField': 'whatever' }
         """
-        path = API_PATH['global'].format(database=self.database)
+        path = self._get_api_path('global')
 
         data = {'globalFields': globals_}
 
@@ -634,7 +636,7 @@ class Server(object):
         -----------
         none
         """
-        path = API_PATH['meta']['product']
+        path = self._get_api_path('meta.product')
 
         response = self._call_filemaker('GET', path)
 
@@ -647,18 +649,15 @@ class Server(object):
         -----------
         none
         """
-        path = API_PATH['meta']['databases']
+        path = self._get_api_path('meta.databases')
 
         # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
-        # = > If Filter Databases in Client Applications is disabled, 
+        # If Filter Databases in Client Applications is disabled:
         # no Authorization header is required.
-        #response = self._call_filemaker('GET', path)
-
-        # https://fmhelp.filemaker.com/docs/18/en/dataapi/#get-metadata_get-database-names
+        #
         # If Filter Databases in Client Applications is enabled:
-        # Authorization: a base64-encoded string representing the account name 
-        # and password to use to log in to the hosted database. 
-        #response = self._call_filemaker('GET', path, auth=(self.user, self.password))
+        # Authorization: a base64-encoded string representing the account name
+        # and password to use to log in to the hosted database.
 
         # See discussion here: https://github.com/davidhamann/python-fmrest/pull/46#issuecomment-1079328531
         # "This [will] eventually overwrite the Authorization header with the data provided in the auth 
@@ -677,9 +676,7 @@ class Server(object):
         -----------
         none
         """
-        path = API_PATH['meta']['layouts'].format(
-            database=self.database
-        )
+        path = self._get_api_path('meta.layouts')
 
         response = self._call_filemaker('GET', path)
 
@@ -693,9 +690,7 @@ class Server(object):
         -----------
         none
         """
-        path = API_PATH['meta']['scripts'].format(
-            database=self.database
-        )
+        path = self._get_api_path('meta.scripts')
 
         response = self._call_filemaker('GET', path)
 
@@ -709,10 +704,7 @@ class Server(object):
         -----------
         none
         """
-        path = API_PATH['meta']['layouts'].format(
-            database=self.database,
-            layout=self.layout
-        ) + f'/{self.layout}'
+        path = self._get_api_path('meta.layouts') + f'/{self.layout}'
 
         response = self._call_filemaker('GET', path)
 

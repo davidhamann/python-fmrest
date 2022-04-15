@@ -46,7 +46,8 @@ class CloudServerTestCase(unittest.TestCase):
                                        user=ACCOUNT_NAME,
                                        password=ACCOUNT_PASS,
                                        database=DATABASE,
-                                       layout=LAYOUT
+                                       layout=LAYOUT,
+                                       api_version='v1'
                                        )
 
     @mock.patch.object(requests, 'request')
@@ -108,5 +109,6 @@ class CloudServerTestCase(unittest.TestCase):
                                user=ACCOUNT_NAME,
                                password=ACCOUNT_PASS,
                                database=DATABASE,
-                               layout=LAYOUT
+                               layout=LAYOUT,
+                               api_version='v1'
                                )

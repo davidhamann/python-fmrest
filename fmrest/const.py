@@ -2,25 +2,28 @@
 import os
 from enum import Enum, unique
 from pkg_resources import get_distribution
+from typing import Dict, Any
 
 __version__ = get_distribution('python-fmrest').version
 
 PORTAL_PREFIX = 'portal_'
 TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
 
-API_PATH = {
+API_VERSIONS = ('v1', 'v2', 'vLatest')
+API_PATH_PREFIX = '/fmi/data/{version}'
+API_PATH: Dict[str, Any] = {
     'meta': {
-        'product':      '/fmi/data/v1/productInfo',
-        'databases':    '/fmi/data/v1/databases',
-        'layouts':      '/fmi/data/v1/databases/{database}/layouts',
-        'scripts':      '/fmi/data/v1/databases/{database}/scripts'
+        'product':      '/productInfo',
+        'databases':    '/databases',
+        'layouts':      '/databases/{database}/layouts',
+        'scripts':      '/databases/{database}/scripts'
     },
-    'auth':             '/fmi/data/v1/databases/{database}/sessions/{token}',
-    'record':           '/fmi/data/v1/databases/{database}/layouts/{layout}/records',
-    'record_action':    '/fmi/data/v1/databases/{database}/layouts/{layout}/records/{record_id}',
-    'find':             '/fmi/data/v1/databases/{database}/layouts/{layout}/_find',
-    'script':           '/fmi/data/v1/databases/{database}/layouts/{layout}/script/{script_name}',
-    'global':           '/fmi/data/v1/databases/{database}/globals'
+    'auth':             '/databases/{database}/sessions/{token}',
+    'record':           '/databases/{database}/layouts/{layout}/records',
+    'record_action':    '/databases/{database}/layouts/{layout}/records/{record_id}',
+    'find':             '/databases/{database}/layouts/{layout}/_find',
+    'script':           '/databases/{database}/layouts/{layout}/script/{script_name}',
+    'global':           '/databases/{database}/globals'
 }
 
 

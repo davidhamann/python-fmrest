@@ -11,7 +11,8 @@ Quick example:
                         user='admin',
                         password='admin',
                         database='Contacts',
-                        layout='Contacts')
+                        layout='Contacts',
+                        api_version='v1')
 >>> fms.login()
 >>> record = fms.get_record(1)
 >>> record.name
@@ -29,6 +30,10 @@ All API paths can be served:
 - script
 
 Access to meta routes is also supported.
+
+## Sponsor
+
+python-fmrest development is supported by [allgood.systems](https://allgood.systems). Monitor your web sites and get notifications when your scheduled FileMaker scripts or system scripts stop running.
 
 ## Feel free to contribute!
 

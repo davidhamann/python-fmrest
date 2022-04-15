@@ -164,3 +164,14 @@ def convert_string_type(value):
 
     # fall back to string
     return value
+
+
+class PlaceholderDict(dict):
+    """Used to allow missing values in format maps and keep placeholders intact
+    Example:
+        > '{a}, {b}'.format_map(PlaceholderDict(a='hello'))
+        'hello, {b}'
+    Also see: https://docs.python.org/3/library/stdtypes.html#str.format_map
+    """
+    def __missing__(self, key):
+        return key.join('{}')

@@ -37,8 +37,8 @@ class CloudServer(Server):
                  data_sources: Optional[List[Dict]] = None,
                  verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False,
-                 auto_relogin: bool = False
-                 ) -> None:
+                 auto_relogin: bool = False,
+                 api_version: Optional[str] = None) -> None:
         """Initialize the CloudServer class.
 
         Parameters
@@ -101,7 +101,8 @@ class CloudServer(Server):
                          data_sources=data_sources,
                          verify_ssl=verify_ssl,
                          type_conversion=type_conversion,
-                         auto_relogin=auto_relogin)
+                         auto_relogin=auto_relogin,
+                         api_version=api_version)
 
         self.cognito_userpool_id = cognito_userpool_id
         self.cognito_client_id = cognito_client_id
@@ -119,7 +120,7 @@ class CloudServer(Server):
     def _get_bearer_token(self) -> Optional[str]:
         """Retrieve the bearer token needed to authenticate FileMaker Data API calls."""
 
-        path = API_PATH['auth'].format(database=self.database, token='')
+        path = self._get_api_path('auth').format(token='')
         data = {'fmDataSource': self.data_sources}
 
         response = self._call_filemaker('POST', path, data=data)
