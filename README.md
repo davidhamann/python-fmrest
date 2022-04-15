@@ -28,6 +28,8 @@ All API paths can be served:
 - global
 - script
 
+Access to meta routes is also supported.
+
 ## Feel free to contribute!
 
 If you would like to contribute, you can help with the code, try it out and report 🐞🐞, propose new features, write tests, add examples and documentation.
