@@ -38,6 +38,8 @@ class CloudServer(Server):
                  verify_ssl: Union[bool, str] = True,
                  type_conversion: bool = False,
                  auto_relogin: bool = False,
+                 proxies: Optional[dict] = None,
+                 cognito_proxies: Optional[dict] = None,
                  api_version: Optional[str] = None) -> None:
         """Initialize the CloudServer class.
 
@@ -85,6 +87,12 @@ class CloudServer(Server):
             If True, tries to automatically get a new token (re-login) when a
             request comes back with a 952 (invalid token) error. Defaults to
             False.
+        proxies : dict, optional
+            Pass requests to the FileMaker Data API through a proxy. Proxies should be configured as follows:
+            {'http': 'http://username:password@hostname:port', 'https': 'http://username:password@hostname:port'}
+        cognito_proxies : dict, optional
+            Proxy to use when authenticating the Claris ID with Cognito. When deployed to a server, it may be necessary
+            to use a static proxy during Cognito authentication to avoid entering a sign-in verification loop
         """
 
         if not _has_pycognito:
@@ -102,18 +110,27 @@ class CloudServer(Server):
                          verify_ssl=verify_ssl,
                          type_conversion=type_conversion,
                          auto_relogin=auto_relogin,
-                         api_version=api_version)
+                         api_version=api_version,
+                         proxies=proxies)
 
         self.cognito_userpool_id = cognito_userpool_id
         self.cognito_client_id = cognito_client_id
+        self.cognito_proxies = cognito_proxies
         self._fmid_token = None
 
     def _get_cognito_token(self) -> str:
         """Use Pycognito library to authenticate with Amazon Cognito and retrieve FMID token."""
+        kwargs = {
+            'user_pool_id': self.cognito_userpool_id,
+            'client_id': self.cognito_client_id,
+            'username': self.user
+        }
+        if self.cognito_proxies:
+            kwargs['botocore_config'] = pycognito.boto3.session.Config(
+                proxies=self.cognito_proxies
+            )
 
-        user = pycognito.Cognito(user_pool_id=self.cognito_userpool_id,
-                                 client_id=self.cognito_client_id,
-                                 username=self.user)
+        user = pycognito.Cognito(**kwargs)
         user.authenticate(self.password)
         return user.id_token
 
