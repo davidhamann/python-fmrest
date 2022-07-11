@@ -47,7 +47,7 @@ Questions/problems? Open a [new issue](https://github.com/davidhamann/python-fmr
 
 ## Install
 
-You need Python 3.6 and FileMaker Server/Cloud 17.
+You need Python 3.6 or newer and FileMaker Server/Cloud 17 or newer.
 
 You can install the library like this (preferably in a [virtualenv](https://virtualenv.pypa.io/en/stable/)):
 
