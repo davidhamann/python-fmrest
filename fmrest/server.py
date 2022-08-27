@@ -61,8 +61,10 @@ class Server(object):
         database : str
             Name of database without extension, e.g. Contacts
         layout : str
-            Layout to work with. Can be changed between calls by setting the layout attribute again,
-            e.g.: fmrest_instance.layout = 'new_layout'.
+            Layout to work with. Can be changed between calls by setting the
+            layout attribute again, e.g.: fmrest_instance.layout = 'my_layout',
+            or by passing it per call via the request_layout parameter to one
+            of the Server's methods.
         data_sources : list, optional
             List of dicts in formatj
                 [{'database': 'db_file', 'username': 'admin', 'password': 'admin'}]
@@ -137,7 +139,8 @@ class Server(object):
             bool(self._token), self.database, self.layout
         )
 
-    def _get_api_path(self, resource: str) -> str:
+    def _get_api_path(self, resource: str,
+                      layout: Optional[str] = None) -> str:
         resource_path = resource.split('.')
         if len(resource_path) > 1:
             if resource_path[0] == 'meta':
@@ -147,9 +150,10 @@ class Server(object):
         else:
             path = API_PATH[resource_path[0]]
 
+        request_layout = layout if layout else self.layout
         return (API_PATH_PREFIX.format(version=self.api_version) +
                 path.format_map(PlaceholderDict(database=self.database,
-                                                layout=self.layout)))
+                                                layout=request_layout)))
 
     def _with_auto_relogin(f):
         @wraps(f)
@@ -202,15 +206,21 @@ class Server(object):
 
         return self.last_error == FMSErrorCode.SUCCESS.value
 
-    def create(self, record: Record) -> Optional[int]:
-        """Shortcut to create_record method. Takes record instance and calls create_record."""
+    def create(self, record: Record,
+               request_layout: Optional[str] = None) -> Optional[int]:
+        """Shortcut to create_record method. Takes record instance and calls
+        create_record.
+        """
         # TODO: support for handling foundset instances inside record instance
-        return self.create_record(record.to_dict(ignore_portals=True, ignore_internal_ids=True))
+        return self.create_record(
+            record.to_dict(ignore_portals=True, ignore_internal_ids=True),
+            request_layout=request_layout)
 
     @_with_auto_relogin
     def create_record(self, field_data: Dict[str, Any],
                       portals: Optional[Dict[str, Any]] = None,
-                      scripts: Optional[Dict[str, List]] = None) -> Optional[int]:
+                      scripts: Optional[Dict[str, List]] = None,
+                      request_layout: Optional[str] = None) -> Optional[int]:
         """Creates a new record with given field data and returns new internal record id.
 
         Parameters
@@ -228,8 +238,13 @@ class Server(object):
                 {'TO::field': 'hello', 'TO::field2': 'world'},
                 {'TO::field': 'another record'}
             ]
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
         """
-        path = self._get_api_path('record')
+        path = self._get_api_path('record', request_layout)
 
         request_data: Dict = {'fieldData': field_data}
         if portals:
@@ -245,15 +260,21 @@ class Server(object):
 
         return int(record_id) if record_id else None
 
-    def edit(self, record: Record, validate_mod_id: bool = False) -> bool:
-        """Shortcut to edit_record method. Takes (modified) record instance and calls edit_record"""
+    def edit(self, record: Record, validate_mod_id: bool = False,
+             request_layout: Optional[str] = None) -> bool:
+        """Shortcut to edit_record method. Takes (modified) record instance
+        and calls edit_record.
+        """
         mod_id = record.modification_id if validate_mod_id else None
-        return self.edit_record(record.record_id, record.modifications(), mod_id)
+        return self.edit_record(
+            record.record_id, record.modifications(), mod_id,
+            request_layout=request_layout)
 
     @_with_auto_relogin
     def edit_record(self, record_id: int, field_data: Dict[str, Any],
                     mod_id: Optional[int] = None, portals: Optional[Dict[str, Any]] = None,
-                    scripts: Optional[Dict[str, List]] = None) -> bool:
+                    scripts: Optional[Dict[str, List]] = None,
+                    request_layout: Optional[str] = None) -> bool:
         """Edits the record with the given record_id and field_data. Return True on success.
 
         Parameters
@@ -280,8 +301,14 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
         """
-        path = self._get_api_path('record_action').format(record_id=record_id)
+        path = self._get_api_path(
+            'record_action', request_layout).format(record_id=record_id)
 
         request_data: Dict = {'fieldData': field_data}
         if mod_id:
@@ -299,17 +326,20 @@ class Server(object):
 
         return self.last_error == FMSErrorCode.SUCCESS.value
 
-    def delete(self, record: Record) -> bool:
+    def delete(self, record: Record,
+               request_layout: Optional[str] = None) -> bool:
         """Shortcut to delete_record method. Takes record instance and calls delete_record."""
         try:
             record_id = record.record_id
         except AttributeError:
             raise RecordError('Not a valid record instance. record_id is missing.') from None
 
-        return self.delete_record(record_id)
+        return self.delete_record(record_id, request_layout=request_layout)
 
     @_with_auto_relogin
-    def delete_record(self, record_id: int, scripts: Optional[Dict[str, List]] = None):
+    def delete_record(self, record_id: int,
+                      scripts: Optional[Dict[str, List]] = None,
+                      request_layout: Optional[str] = None):
         """Deletes a record for the given record_id. Returns True on success.
 
         Parameters
@@ -321,8 +351,14 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
         """
-        path = self._get_api_path('record_action').format(record_id=record_id)
+        path = self._get_api_path(
+            'record_action', request_layout).format(record_id=record_id)
 
         params = build_script_params(scripts) if scripts else None
 
@@ -333,33 +369,53 @@ class Server(object):
     @_with_auto_relogin
     def get_record(self, record_id: int, portals: Optional[List[Dict]] = None,
                    scripts: Optional[Dict[str, List]] = None,
-                   layout: Optional[str] = None) -> Record:
+                   layout: Optional[str] = None,
+                   request_layout: Optional[str] = None,
+                   response_layout: Optional[str] = None) -> Record:
         """Fetches record with given ID and returns Record instance
 
         Parameters
         -----------
         record_id : int
-            The FileMaker record id. Be aware that record ids CAN change (e.g. in cloned databases)
+            The FileMaker record id. Be aware that record ids CAN change
+            (e.g. in cloned databases)
         portals : list
-            A list of dicts in format [{'name':'objectName', 'offset':1, 'limit':50}]
+            A list of dicts in format
+            [{'name':'objectName', 'offset':1, 'limit':50}]
 
-            Use this if you want to limit the amout of data returned. Offset and limit are optional
-            with default values of 1 and 50, respectively.
+            Use this if you want to limit the amout of data returned. Offset
+            and limit are optional with default values of 1 and 50,
+            respectively.
             All portals will be returned when portals==None. Default None.
         scripts : dict, optional
             Specify which scripts should run when with which parameters
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
-            List should have length of 2 (both script name and parameter are required.)
-        layout : str, optional
-            Passing a layout name allows you to set the response (!) layout.
-            This is helpful, for example, if you want to limit the number of fields/portals being
-            returned and have a dedicated response layout.
+            List should have length of 2 (both script name and parameter are
+            required.)
+        layout : str, optional, DEPRECATED -> use response_layout
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
+        response_layout : str, optional
+            Set the response layout. This is helpful, for example, if you
+            want to limit the number of fields/portals being returned and have
+            a dedicated response layout.
         """
-        path = self._get_api_path('record_action').format(record_id=record_id)
+        if layout is not None:
+            warnings.warn('layout parameter is deprecated and will be removed '
+                          'in the future. Please use response_layout instead.')
+
+        path = self._get_api_path('record_action',
+                                  request_layout).format(record_id=record_id)
 
         params = build_portal_params(portals, True) if portals else {}
-        params['layout.response'] = layout
+
+        # set response layout; layout param is only handled for backward-
+        # compatibility
+        params['layout.response'] = layout if layout else response_layout
 
         # build script param object in FMSDAPI style
         script_params = build_script_params(scripts) if scripts else None
@@ -368,13 +424,16 @@ class Server(object):
 
         response = self._call_filemaker('GET', path, params=params)
 
-        # pass response to foundset generator function. As we are only requesting one record though,
-        # we only re-use the code and immediately consume the first (and only) record via next().
+        # pass response to foundset generator function. As we are only
+        # requesting one record though, we only re-use the code and immediately
+        # consume the first (and only) record via next().
         return next(self._process_foundset_response(response))
 
     @_with_auto_relogin
     def perform_script(self, name: str,
-                       param: Optional[str] = None) -> Tuple[Optional[int], Optional[str]]:
+                       param: Optional[str] = None,
+                       request_layout: Optional[str] = None
+                       ) -> Tuple[Optional[int], Optional[str]]:
         """Performs a script with the given name and parameter.
 
         Returns tuple containing script error and result.
@@ -385,8 +444,14 @@ class Server(object):
             The script name as defined in FileMaker Pro
         param: str
             Optional script parameter
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
         """
-        path = self._get_api_path('script').format(script_name=name)
+        path = self._get_api_path(
+            'script', request_layout).format(script_name=name)
 
         response = self._call_filemaker('GET', path, params={'script.param': param})
 
@@ -397,7 +462,8 @@ class Server(object):
         return script_error, script_result
 
     @_with_auto_relogin
-    def upload_container(self, record_id: int, field_name: str, file_: IO) -> bool:
+    def upload_container(self, record_id: int, field_name: str, file_: IO,
+                         request_layout: Optional[str] = None) -> bool:
         """Uploads the given binary data for the given record id and returns True on success.
         Parameters
         -----------
@@ -407,8 +473,14 @@ class Server(object):
             Name of the container field on the current layout without TO name. E.g.: my_container
         file_ : fileobj
             File object as returned by open() in binary mode.
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
         """
-        path = self._get_api_path('record_action').format(record_id=record_id)
+        path = self._get_api_path(
+            'record_action', request_layout).format(record_id=record_id)
         path += '/containers/' + field_name + '/1'
 
         # requests library handles content type for multipart/form-data incl. boundary
@@ -422,7 +494,9 @@ class Server(object):
                     sort: Optional[List[Dict[str, str]]] = None,
                     portals: Optional[List[Dict[str, Any]]] = None,
                     scripts: Optional[Dict[str, List]] = None,
-                    layout: Optional[str] = None) -> Foundset:
+                    layout: Optional[str] = None,
+                    request_layout: Optional[str] = None,
+                    response_layout: Optional[str] = None) -> Foundset:
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -444,17 +518,30 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
-        layout : str, optional
-            Passing a layout name allows you to set the response (!) layout.
-            This is helpful, for example, if you want to limit the number of fields/portals being
-            returned and have a dedicated response layout.
+        layout : str, optional, DEPRECATED -> use response_layout
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
+        response_layout : str, optional
+            Set the response layout. This is helpful, for example, if you
+            want to limit the number of fields/portals being returned and have
+            a dedicated response layout.
         """
-        path = self._get_api_path('record')
+        if layout is not None:
+            warnings.warn('layout parameter is deprecated and will be removed '
+                          'in the future. Please use response_layout instead.')
+
+        path = self._get_api_path('record', request_layout)
 
         params = build_portal_params(portals, True) if portals else {}
         params['_offset'] = offset
         params['_limit'] = limit
-        params['layout.response'] = layout
+
+        # set response layout; layout param is only handled for backward-
+        # compatibility
+        params['layout.response'] = layout if layout else response_layout
 
         if sort:
             params['_sort'] = json.dumps(sort)
@@ -475,7 +562,9 @@ class Server(object):
              offset: int = 1, limit: int = 100,
              portals: Optional[List[Dict[str, Any]]] = None,
              scripts: Optional[Dict[str, List]] = None,
-             layout: Optional[str] = None) -> Foundset:
+             layout: Optional[str] = None,
+             request_layout: Optional[str] = None,
+             response_layout: Optional[str] = None) -> Foundset:
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -506,20 +595,30 @@ class Server(object):
             Example: {'prerequest': ['my_script', 'my_param']}
             Allowed types: 'prerequest', 'presort', 'after'
             List should have length of 2 (both script name and parameter are required.)
-        layout : str, optional
-            Passing a layout name allows you to set the response (!) layout.
-            Your find will still be performed based on the Server.layout attribute.
-            This is helpful, for example, if you want to limit the number of fields/portals being
-            returned and have a dedicated response layout.
+        layout : str, optional, DEPRECATED -> use response_layout
+        request_layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute and is
+            useful if you have a shared Server instance in a multi-threaded
+            program.
+        response_layout : str, optional
+            Set the response layout. This is helpful, for example, if you
+            want to limit the number of fields/portals being returned and have
+            a dedicated response layout.
         """
-        path = self._get_api_path('find')
+        if layout is not None:
+            warnings.warn('layout parameter is deprecated and will be removed '
+                          'in the future. Please use response_layout instead.')
+
+        path = self._get_api_path('find', request_layout)
 
         data = {
             'query': query,
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
-            'layout.response': layout
+            # "layout" param is only handled for backwards-compatibility
+            'layout.response': layout if layout else response_layout
         }
 
         # build script param object in FMSDAPI style
@@ -697,14 +796,15 @@ class Server(object):
         return response.get('scripts', None)
 
     @_with_auto_relogin
-    def get_layout(self) -> Dict:
+    def get_layout(self, layout: Optional[str] = None) -> Dict:
         """Fetches layout metadata and returns Dict instance
 
         Parameters
         -----------
         none
         """
-        path = self._get_api_path('meta.layouts') + f'/{self.layout}'
+        target_layout = layout if layout else self.layout
+        path = self._get_api_path('meta.layouts') + f'/{target_layout}'
 
         response = self._call_filemaker('GET', path)
 

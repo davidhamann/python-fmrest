@@ -253,6 +253,41 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(fake_record.name, record.name)
             self.assertEqual(fake_record.drink, record.drink)
 
+    def test_get_record_limited_response(self) -> None:
+        """Test get_record with different response layout"""
+        with self._fms as server:
+            server.login()
+            fake_record = Record(
+                ['name', 'drink'], ['Do not delete record 1', 'Coffee'])
+
+            # with deprecated layout parameter
+            record = server.get_record(1, layout='ContactsLimitedResponse')
+            self.assertEqual(fake_record.drink, record.drink)
+
+            with self.assertRaises(AttributeError):
+                # name not present on ContactsLimitedResponse
+                _ = record.name
+
+            # with response_layout parameter
+            record = server.get_record(
+                1, response_layout='ContactsLimitedResponse')
+            self.assertEqual(fake_record.drink, record.drink)
+
+            with self.assertRaises(AttributeError):
+                # name not present on ContactsLimitedResponse
+                _ = record.name
+
+    def test_get_record_with_request_layout(self) -> None:
+        with self._fms as server:
+            server.login()
+            fake_record = Record(['name'], ['Mercury'])
+
+            # current layout is Contacts
+            self.assertEqual(server.layout, 'Contacts')
+            # request layout is Planets
+            record = server.get_record(1, request_layout='Planets')
+            self.assertEqual(fake_record.name, record.name)
+
     def test_upload_container(self) -> None:
         """Test that uploading container data works without errors."""
         with self._fms as server:
