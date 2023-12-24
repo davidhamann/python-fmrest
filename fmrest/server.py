@@ -7,7 +7,7 @@ from functools import wraps
 import requests
 from .utils import (request, build_portal_params, build_script_params,
                     filename_from_url, PlaceholderDict)
-from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_PATH_PREFIX,
+from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_DATEFORMATS, API_PATH_PREFIX,
                     API_PATH)
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
@@ -371,7 +371,8 @@ class Server(object):
                    scripts: Optional[Dict[str, List]] = None,
                    layout: Optional[str] = None,
                    request_layout: Optional[str] = None,
-                   response_layout: Optional[str] = None) -> Record:
+                   response_layout: Optional[str] = None,
+                    dateformats: Optional[str] = None) -> Record:
         """Fetches record with given ID and returns Record instance
 
         Parameters
@@ -403,6 +404,10 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
+        dateformats : str, optional
+            The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
+            or 2 for ISO8601 (YYYY-MM-DD).
+            If not specified, the default value is 0.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -412,6 +417,9 @@ class Server(object):
                                   request_layout).format(record_id=record_id)
 
         params = build_portal_params(portals, True) if portals else {}
+
+        # Date format: 0-US (MM/DD/YYYY, default), 1-file locale, 2-ISO8601 (YYYY-MM-DD)
+        params['dateformats'] = dateformats if dateformats in API_DATEFORMATS else '0'
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -496,7 +504,8 @@ class Server(object):
                     scripts: Optional[Dict[str, List]] = None,
                     layout: Optional[str] = None,
                     request_layout: Optional[str] = None,
-                    response_layout: Optional[str] = None) -> Foundset:
+                    response_layout: Optional[str] = None,
+                    dateformats: Optional[str] = None) -> Foundset:
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -528,6 +537,10 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
+        dateformats : str, optional
+            The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
+            or 2 for ISO8601 (YYYY-MM-DD).
+            If not specified, the default value is 0.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -538,6 +551,9 @@ class Server(object):
         params = build_portal_params(portals, True) if portals else {}
         params['_offset'] = offset
         params['_limit'] = limit
+
+        # Date format: 0-US (MM/DD/YYYY, default), 1-file locale, 2-ISO8601 (YYYY-MM-DD)
+        params['dateformats'] = dateformats if dateformats in API_DATEFORMATS else '0'
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -564,7 +580,8 @@ class Server(object):
              scripts: Optional[Dict[str, List]] = None,
              layout: Optional[str] = None,
              request_layout: Optional[str] = None,
-             response_layout: Optional[str] = None) -> Foundset:
+             response_layout: Optional[str] = None,
+             dateformats: Optional[str] = None) -> Foundset:
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -605,6 +622,10 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
+        dateformats : str, optional
+            The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
+            or 2 for ISO8601 (YYYY-MM-DD).
+            If not specified, the default value is 0.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -617,6 +638,8 @@ class Server(object):
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
+            # Date format: 0-US (MM/DD/YYYY, default), 1-file locale, 2-ISO8601 (YYYY-MM-DD)
+            'dateformats': dateformats if dateformats in API_DATEFORMATS else '0',
             # "layout" param is only handled for backwards-compatibility
             'layout.response': layout if layout else response_layout
         }
