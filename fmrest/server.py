@@ -820,11 +820,13 @@ class Server(object):
 
     @_with_auto_relogin
     def get_layout(self, layout: Optional[str] = None) -> Dict:
-        """Fetches layout metadata and returns Dict instance
+        """Fetches layout metadata and returns "fieldMetaData" Dict instance
 
         Parameters
         -----------
-        none
+        layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute
         """
         target_layout = layout if layout else self.layout
         path = self._get_api_path('meta.layouts') + f'/{target_layout}'
@@ -832,6 +834,24 @@ class Server(object):
         response = self._call_filemaker('GET', path)
 
         return response.get('fieldMetaData', None)
+
+    @_with_auto_relogin
+    def get_layout_metadata(self, layout: Optional[str] = None) -> Dict:
+        """Fetches layout metadata and returns Dict instance.
+        Contains: fieldMetaData, portalMetaData, valueLists
+
+        Parameters
+        -----------
+        layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute
+        """
+        target_layout = layout if layout else self.layout
+        path = self._get_api_path('meta.layouts') + f'/{target_layout}'
+
+        response = self._call_filemaker('GET', path)
+
+        return response
 
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
