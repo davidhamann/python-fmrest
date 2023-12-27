@@ -853,6 +853,50 @@ class Server(object):
 
         return response
 
+    def get_layout_valueList(self, name: str, layout: Optional[str] = None):
+        """Fetch layout metadata and return the 'name' valueList
+        suitable to use in a Form Select (tuple)
+        Retrieves layout metadata and returns a list of "name" values
+        for use in a form SELECT (tuple)
+
+        Example:
+            values = fms.get_layout_valueList()
+            -> (('a','A'), ('b','B'), ('c','C'))
+
+        Parameters
+        -----------
+        name : str
+            The list name to retreive values
+        fms : object
+            fmrest instance to query
+        layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute
+        """
+        target_layout = layout if layout else self.layout
+        metadata = self.get_layout_metadata(target_layout)
+        valueLists = metadata.get('valueLists', None)
+
+        # Initializing the list for the Select form
+        options = []
+
+        # As the API returns the same valueList several times,
+        # initialize a set to keep track of names already encountered.
+        encountered_names = set()
+
+        # Browse the elements of the JSON object
+        for item in valueLists:
+            if item['name'] == name and item['name'] not in encountered_names:
+                encountered_names.add(item['name'])
+
+                evaluation_values = item['values']
+                for value in evaluation_values:
+                    actual_value = value['value']
+                    display_value = value['displayValue']
+                    options.append((actual_value, display_value))
+
+        return tuple(options)
+
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
                         params: Optional[Dict] = None,
