@@ -854,9 +854,7 @@ class Server(object):
         return response
 
     def get_layout_valueList(self, name: str, layout: Optional[str] = None):
-        """Fetch layout metadata and return the 'name' valueList
-        suitable to use in a Form Select (tuple)
-        Retrieves layout metadata and returns a list of "name" values
+        """Retrieves layout metadata and returns a list of "name" values
         for use in a form SELECT (tuple)
 
         Example:
