@@ -7,7 +7,7 @@ from functools import wraps
 import requests
 from .utils import (request, build_portal_params, build_script_params,
                     filename_from_url, PlaceholderDict)
-from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_DATEFORMATS, API_PATH_PREFIX,
+from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_DATE_FORMATS, API_PATH_PREFIX,
                     API_PATH)
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
@@ -372,7 +372,7 @@ class Server(object):
                    layout: Optional[str] = None,
                    request_layout: Optional[str] = None,
                    response_layout: Optional[str] = None,
-                    dateformats: Optional[str] = None) -> Record:
+                   date_format: Optional[str] = None) -> Record:
         """Fetches record with given ID and returns Record instance
 
         Parameters
@@ -404,7 +404,7 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
-        dateformats : str, optional
+        date_format : str, optional
             The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
             or 2 for ISO8601 (YYYY-MM-DD).
             If not specified, the default value is 0.
@@ -418,8 +418,7 @@ class Server(object):
 
         params = build_portal_params(portals, True) if portals else {}
 
-        # Date format: 0-US (MM/DD/YYYY, default), 1-file locale, 2-ISO8601 (YYYY-MM-DD)
-        params['dateformats'] = dateformats if dateformats in API_DATEFORMATS else '0'
+        params['dateformats'] = next((format[1] for format in API_DATE_FORMATS if format[0] == date_format), None)
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -505,7 +504,7 @@ class Server(object):
                     layout: Optional[str] = None,
                     request_layout: Optional[str] = None,
                     response_layout: Optional[str] = None,
-                    dateformats: Optional[str] = None) -> Foundset:
+                    date_format: Optional[str] = None) -> Foundset:
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -537,7 +536,7 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
-        dateformats : str, optional
+        date_format : str, optional
             The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
             or 2 for ISO8601 (YYYY-MM-DD).
             If not specified, the default value is 0.
@@ -552,8 +551,7 @@ class Server(object):
         params['_offset'] = offset
         params['_limit'] = limit
 
-        # Date format: 0-US (MM/DD/YYYY, default), 1-file locale, 2-ISO8601 (YYYY-MM-DD)
-        params['dateformats'] = dateformats if dateformats in API_DATEFORMATS else '0'
+        params['dateformats'] = next((format[1] for format in API_DATE_FORMATS if format[0] == date_format), None)
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -581,7 +579,7 @@ class Server(object):
              layout: Optional[str] = None,
              request_layout: Optional[str] = None,
              response_layout: Optional[str] = None,
-             dateformats: Optional[str] = None) -> Foundset:
+             date_format: Optional[str] = None) -> Foundset:
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -622,7 +620,7 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
-        dateformats : str, optional
+        date_format : str, optional
             The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
             or 2 for ISO8601 (YYYY-MM-DD).
             If not specified, the default value is 0.
@@ -638,8 +636,7 @@ class Server(object):
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
-            # Date format: 0-US (MM/DD/YYYY, default), 1-file locale, 2-ISO8601 (YYYY-MM-DD)
-            'dateformats': dateformats if dateformats in API_DATEFORMATS else '0',
+            'dateformats': next((format[1] for format in API_DATE_FORMATS if format[0] == date_format), None),
             # "layout" param is only handled for backwards-compatibility
             'layout.response': layout if layout else response_layout
         }
@@ -819,21 +816,32 @@ class Server(object):
         return response.get('scripts', None)
 
     @_with_auto_relogin
-    def get_layout(self, layout: Optional[str] = None) -> Dict:
-        """Fetches layout metadata and returns "fieldMetaData" Dict instance
+    def get_layout(self, layout: Optional[str] = None, metadata: Optional[str] = None) -> Dict:
+        """Fetches layout metadata and returns Dict instance of metadata parameter
 
         Parameters
         -----------
         layout : str, optional
             Sets the layout name for this request. This takes precedence over
             the value stored in the Server instance's layout attribute
+        metadata : str, optional
+            Options to get all or specifics metadatas.
+            Choices are 'fields', 'portals', 'value_lists' or 'all'.
+            Default is 'fields'
         """
         target_layout = layout if layout else self.layout
         path = self._get_api_path('meta.layouts') + f'/{target_layout}'
 
         response = self._call_filemaker('GET', path)
 
-        return response.get('fieldMetaData', None)
+        if metadata == 'all':
+            return response
+        elif metadata == 'portals':
+            return response.get('portalMetaData', None)
+        elif metadata == 'value_lists':
+            return response.get('valueLists', None)
+        else:
+            return response.get('fieldMetaData', None)
 
     @_with_auto_relogin
     def get_layout_metadata(self, layout: Optional[str] = None) -> Dict:
@@ -853,47 +861,37 @@ class Server(object):
 
         return response
 
-    def get_layout_valueList(self, name: str, layout: Optional[str] = None):
-        """Retrieves layout metadata and returns a list of "name" values
-        for use in a form SELECT (tuple)
-
-        Example:
-            values = fms.get_layout_valueList()
-            -> (('a','A'), ('b','B'), ('c','C'))
+    def get_value_list_values(self, name: str, layout: Optional[str] = None, output: Optional[str] = None) -> List[Tuple[str, str]]:
+        """Retrieves layout metadata and returns a list of tuple of (value, display value) a named FileMaker value list.
 
         Parameters
         -----------
         name : str
             The list name to retreive values
-        fms : object
-            fmrest instance to query
         layout : str, optional
             Sets the layout name for this request. This takes precedence over
             the value stored in the Server instance's layout attribute
+        output : str, optional
+            Type to output the tupled values. Default to 'list'
+            Choices are
+                'list':  [('a','A'), ('b','B'), ('c','C')]
+                'tuple': (('a','A'), ('b','B'), ('c','C'))
         """
         target_layout = layout if layout else self.layout
         metadata = self.get_layout_metadata(target_layout)
-        valueLists = metadata.get('valueLists', None)
+        value_lists = metadata.get('valueLists', None)
 
-        # Initializing the list for the Select form
-        options = []
+        values = []
 
-        # As the API returns the same valueList several times,
-        # initialize a set to keep track of names already encountered.
-        encountered_names = set()
+        for vlist in value_lists:
+            if vlist['name'] == name:
+                values += [(v['value'], v['displayValue']) for v in vlist['values']]
+                break
 
-        # Browse the elements of the JSON object
-        for item in valueLists:
-            if item['name'] == name and item['name'] not in encountered_names:
-                encountered_names.add(item['name'])
-
-                evaluation_values = item['values']
-                for value in evaluation_values:
-                    actual_value = value['value']
-                    display_value = value['displayValue']
-                    options.append((actual_value, display_value))
-
-        return tuple(options)
+        if output == 'tuple':
+            return tuple(values)
+        else:
+            return values
 
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
