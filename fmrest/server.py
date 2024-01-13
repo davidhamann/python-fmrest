@@ -843,7 +843,6 @@ class Server(object):
         else:
             return response.get('fieldMetaData', None)
 
-    @_with_auto_relogin
     def get_value_list_values(self, name: str, layout: Optional[str] = None, output: Optional[str] = None) -> List[Tuple[str, str]]:
         """Retrieves layout metadata and returns a list of tuple of (value, display value) a named FileMaker value list.
 
