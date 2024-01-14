@@ -405,9 +405,12 @@ class Server(object):
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
         date_format : str, optional
-            The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
-            or 2 for ISO8601 (YYYY-MM-DD).
-            If not specified, the default value is 0.
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
+            Note that dates should always be sent in the US format when creating or editing a record.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -537,9 +540,12 @@ class Server(object):
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
         date_format : str, optional
-            The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
-            or 2 for ISO8601 (YYYY-MM-DD).
-            If not specified, the default value is 0.
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
+            Note that dates should always be sent in the US format when creating or editing a record.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -621,9 +627,12 @@ class Server(object):
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
         date_format : str, optional
-            The date format. Use 0 for US (MM/DD/YYYY), 1 for file locale,
-            or 2 for ISO8601 (YYYY-MM-DD).
-            If not specified, the default value is 0.
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
+            Note that dates should always be sent in the US format when creating or editing a record.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
