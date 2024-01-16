@@ -155,6 +155,9 @@ class Server(object):
                 path.format_map(PlaceholderDict(database=self.database,
                                                 layout=request_layout)))
 
+    def _date_format_for_keyword(self, keyword: str) -> Optional[str]:
+        return next((format[1] for format in API_DATE_FORMATS if format[0] == keyword), None)
+
     def _with_auto_relogin(f):
         @wraps(f)
         def wrapper(self, *args, **kwargs):
@@ -421,7 +424,7 @@ class Server(object):
 
         params = build_portal_params(portals, True) if portals else {}
 
-        params['dateformats'] = next((format[1] for format in API_DATE_FORMATS if format[0] == date_format), None)
+        params['dateformats'] = self._date_format_for_keyword(date_format)
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -557,7 +560,7 @@ class Server(object):
         params['_offset'] = offset
         params['_limit'] = limit
 
-        params['dateformats'] = next((format[1] for format in API_DATE_FORMATS if format[0] == date_format), None)
+        params['dateformats'] = self._date_format_for_keyword(date_format)
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -645,7 +648,7 @@ class Server(object):
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
-            'dateformats': next((format[1] for format in API_DATE_FORMATS if format[0] == date_format), None),
+            'dateformats': self._date_format_for_keyword(date_format),
             # "layout" param is only handled for backwards-compatibility
             'layout.response': layout if layout else response_layout
         }
@@ -853,8 +856,9 @@ class Server(object):
             return response.get('fieldMetaData', None)
 
     @_with_auto_relogin
-    def get_value_list_values(self, name: str, layout: Optional[str] = None, output: Optional[str] = None) -> List[Tuple[str, str]]:
-        """Retrieves layout metadata and returns a list of tuple of (value, display value) a named FileMaker value list.
+    def get_value_list_values(self, name: str, layout: Optional[str] = None) -> List[Tuple[str, str]]:
+        """Retrieves layout metadata and returns a list of tuple of (value, display value) of a named FileMaker value list
+        in the format [('a','A'), ('b','B'), ('c','C')]
 
         Parameters
         -----------
@@ -863,11 +867,6 @@ class Server(object):
         layout : str, optional
             Sets the layout name for this request. This takes precedence over
             the value stored in the Server instance's layout attribute
-        output : str, optional
-            Type to output the tupled values. Default to 'list'
-            Choices are
-                'list':  [('a','A'), ('b','B'), ('c','C')]
-                'tuple': (('a','A'), ('b','B'), ('c','C'))
         """
         target_layout = layout if layout else self.layout
         value_lists = self.get_layout(layout=target_layout, metadata='value_lists')
@@ -879,10 +878,7 @@ class Server(object):
                 values += [(v['value'], v['displayValue']) for v in vlist['values']]
                 break
 
-        if output == 'tuple':
-            return tuple(values)
-        else:
-            return values
+        return values
 
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
