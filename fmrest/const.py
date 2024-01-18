@@ -10,6 +10,7 @@ PORTAL_PREFIX = 'portal_'
 TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
 
 API_VERSIONS = ('v1', 'v2', 'vLatest')
+API_DATE_FORMATS = [('us', '0'), ('file', '1'), ('iso-8601', '2')]
 API_PATH_PREFIX = '/fmi/data/{version}'
 API_PATH: Dict[str, Any] = {
     'meta': {

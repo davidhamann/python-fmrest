@@ -7,7 +7,7 @@ from functools import wraps
 import requests
 from .utils import (request, build_portal_params, build_script_params,
                     filename_from_url, PlaceholderDict)
-from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_PATH_PREFIX,
+from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_DATE_FORMATS, API_PATH_PREFIX,
                     API_PATH)
 from .exceptions import BadJSON, FileMakerError, RecordError
 from .record import Record
@@ -154,6 +154,9 @@ class Server(object):
         return (API_PATH_PREFIX.format(version=self.api_version) +
                 path.format_map(PlaceholderDict(database=self.database,
                                                 layout=request_layout)))
+
+    def _date_format_for_keyword(self, keyword: str) -> Optional[str]:
+        return next((format[1] for format in API_DATE_FORMATS if format[0] == keyword), None)
 
     def _with_auto_relogin(f):
         @wraps(f)
@@ -371,7 +374,8 @@ class Server(object):
                    scripts: Optional[Dict[str, List]] = None,
                    layout: Optional[str] = None,
                    request_layout: Optional[str] = None,
-                   response_layout: Optional[str] = None) -> Record:
+                   response_layout: Optional[str] = None,
+                   date_format: Optional[str] = None) -> Record:
         """Fetches record with given ID and returns Record instance
 
         Parameters
@@ -403,6 +407,13 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
+        date_format : str, optional
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
+            Note that dates should always be sent in the US format when creating or editing a record.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -412,6 +423,8 @@ class Server(object):
                                   request_layout).format(record_id=record_id)
 
         params = build_portal_params(portals, True) if portals else {}
+
+        params['dateformats'] = self._date_format_for_keyword(date_format)
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -496,7 +509,8 @@ class Server(object):
                     scripts: Optional[Dict[str, List]] = None,
                     layout: Optional[str] = None,
                     request_layout: Optional[str] = None,
-                    response_layout: Optional[str] = None) -> Foundset:
+                    response_layout: Optional[str] = None,
+                    date_format: Optional[str] = None) -> Foundset:
         """Requests all records with given offset and limit and returns result as
         (sorted) Foundset instance.
 
@@ -528,6 +542,13 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
+        date_format : str, optional
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
+            Note that dates should always be sent in the US format when creating or editing a record.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -538,6 +559,8 @@ class Server(object):
         params = build_portal_params(portals, True) if portals else {}
         params['_offset'] = offset
         params['_limit'] = limit
+
+        params['dateformats'] = self._date_format_for_keyword(date_format)
 
         # set response layout; layout param is only handled for backward-
         # compatibility
@@ -564,7 +587,8 @@ class Server(object):
              scripts: Optional[Dict[str, List]] = None,
              layout: Optional[str] = None,
              request_layout: Optional[str] = None,
-             response_layout: Optional[str] = None) -> Foundset:
+             response_layout: Optional[str] = None,
+             date_format: Optional[str] = None) -> Foundset:
         """Finds all records matching query and returns result as a Foundset instance.
 
         Parameters
@@ -605,6 +629,13 @@ class Server(object):
             Set the response layout. This is helpful, for example, if you
             want to limit the number of fields/portals being returned and have
             a dedicated response layout.
+        date_format : str, optional
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
+            Note that dates should always be sent in the US format when creating or editing a record.
         """
         if layout is not None:
             warnings.warn('layout parameter is deprecated and will be removed '
@@ -617,6 +648,7 @@ class Server(object):
             'sort': sort,
             'limit': str(limit),
             'offset': str(offset),
+            'dateformats': self._date_format_for_keyword(date_format),
             # "layout" param is only handled for backwards-compatibility
             'layout.response': layout if layout else response_layout
         }
@@ -796,19 +828,57 @@ class Server(object):
         return response.get('scripts', None)
 
     @_with_auto_relogin
-    def get_layout(self, layout: Optional[str] = None) -> Dict:
-        """Fetches layout metadata and returns Dict instance
+    def get_layout(self, layout: Optional[str] = None, metadata: Optional[str] = None) -> Dict:
+        """Fetches layout metadata and returns Dict instance of metadata parameter
 
         Parameters
         -----------
-        none
+        layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute
+        metadata : str, optional
+            Options to get all or specifics metadatas.
+            Choices are 'fields', 'portals', 'value_lists' or 'all'.
+            Default is 'fields'
         """
         target_layout = layout if layout else self.layout
         path = self._get_api_path('meta.layouts') + f'/{target_layout}'
 
         response = self._call_filemaker('GET', path)
 
-        return response.get('fieldMetaData', None)
+        if metadata == 'all':
+            return response
+        elif metadata == 'portals':
+            return response.get('portalMetaData', None)
+        elif metadata == 'value_lists':
+            return response.get('valueLists', None)
+        else:
+            return response.get('fieldMetaData', None)
+
+    @_with_auto_relogin
+    def get_value_list_values(self, name: str, layout: Optional[str] = None) -> List[Tuple[str, str]]:
+        """Retrieves layout metadata and returns a list of tuple of (value, display value) of a named FileMaker value list
+        in the format [('a','A'), ('b','B'), ('c','C')]
+
+        Parameters
+        -----------
+        name : str
+            The list name to retreive values
+        layout : str, optional
+            Sets the layout name for this request. This takes precedence over
+            the value stored in the Server instance's layout attribute
+        """
+        target_layout = layout if layout else self.layout
+        value_lists = self.get_layout(layout=target_layout, metadata='value_lists')
+
+        values = []
+
+        for vlist in value_lists:
+            if vlist['name'] == name:
+                values += [(v['value'], v['displayValue']) for v in vlist['values']]
+                break
+
+        return values
 
     def _call_filemaker(self, method: str, path: str,
                         data: Optional[Dict] = None,
