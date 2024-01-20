@@ -875,8 +875,9 @@ class Server(object):
 
         for vlist in value_lists:
             if vlist['name'] == name:
-                values += [(v['value'], v['displayValue']) for v in vlist['values']]
+                values += [(v['value'], v.get('displayValue', '')) for v in vlist['values']]
                 break
+
 
         return values
 
