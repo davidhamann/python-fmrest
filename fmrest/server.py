@@ -923,9 +923,9 @@ class Server(object):
                            **kwargs)
 
         if response.status_code == 502:
-            raise BadGatewayError("Web server responded with a Bad Gateway "
-                                  "error. Check if the Data API is enabled "
-                                  "and responding.")
+            raise BadGatewayError('Web server responded with a Bad Gateway '
+                                  'error. Check if the Data API is enabled '
+                                  'and responding.')
         try:
             response_data = response.json()
         except json.decoder.JSONDecodeError as ex:
