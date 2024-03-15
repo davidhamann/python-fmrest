@@ -30,7 +30,7 @@ pytest==3.2.3
 python-dateutil==2.6.1
 pytz==2017.3
 pyzmq==16.0.3
-requests==2.22.0
+requests==2.31.0
 requests-toolbelt==0.8.0
 simplegeneric==0.8.1
 six==1.11.0
