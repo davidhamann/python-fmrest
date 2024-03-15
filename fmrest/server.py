@@ -9,7 +9,7 @@ from .utils import (request, build_portal_params, build_script_params,
                     filename_from_url, PlaceholderDict)
 from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_DATE_FORMATS, API_PATH_PREFIX,
                     API_PATH)
-from .exceptions import BadJSON, FileMakerError, RecordError
+from .exceptions import BadJSON, FileMakerError, RecordError, BadGatewayError
 from .record import Record
 from .foundset import Foundset
 
@@ -132,7 +132,8 @@ class Server(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_traceback) -> None:
-        self.logout()
+        if self._token:
+            self.logout()
 
     def __repr__(self) -> str:
         return '<Server logged_in={} database={} layout={}>'.format(
@@ -921,6 +922,10 @@ class Server(object):
                            proxies=self.proxies,
                            **kwargs)
 
+        if response.status_code == 502:
+            raise BadGatewayError("Web server responded with a Bad Gateway "
+                                  "error. Check if the Data API is enabled "
+                                  "and responding.")
         try:
             response_data = response.json()
         except json.decoder.JSONDecodeError as ex:

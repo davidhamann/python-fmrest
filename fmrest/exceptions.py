@@ -57,5 +57,13 @@ class FileMakerError(FMRestException):
     def __init__(self, error_code: Optional[int], error_message: str) -> None:
         super().__init__('FileMaker Server returned error {}, {}'.format(error_code, error_message))
 
+
+class BadGatewayError(FMRestException):
+    """Exception for Bad Gateway errors from FMS's web server.
+    Usually, this happens when the web server is running, but the Data API is
+    not enabled or not responding.
+    """
+
+
 class RecordError(FMRestException):
     """Error with the local Record instance."""
