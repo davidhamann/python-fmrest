@@ -7,8 +7,9 @@ from .const import TIMEOUT
 
 def request(*args, **kwargs) -> requests.Response:
     """Wrapper around requests library request call"""
+    timeout = kwargs.pop("timeout", TIMEOUT)
     try:
-        return requests.request(*args, timeout=TIMEOUT, **kwargs)
+        return requests.request(*args, timeout=timeout, **kwargs)
     except Exception as ex:
         raise RequestException(ex, args, kwargs) from None
 

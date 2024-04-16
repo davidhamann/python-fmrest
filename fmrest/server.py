@@ -7,8 +7,9 @@ from functools import wraps
 import requests
 from .utils import (request, build_portal_params, build_script_params,
                     filename_from_url, PlaceholderDict)
-from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS, API_DATE_FORMATS, API_PATH_PREFIX,
-                    API_PATH)
+from .const import (PORTAL_PREFIX, FMSErrorCode, API_VERSIONS,
+                    API_DATE_FORMATS, API_PATH_PREFIX,
+                    API_PATH, TIMEOUT)
 from .exceptions import BadJSON, FileMakerError, RecordError, BadGatewayError
 from .record import Record
 from .foundset import Foundset
@@ -45,7 +46,8 @@ class Server(object):
                  type_conversion: bool = False,
                  auto_relogin: bool = False,
                  proxies: Optional[Dict] = None,
-                 api_version: Optional[str] = None) -> None:
+                 api_version: Optional[str] = None,
+                 timeout: int = TIMEOUT) -> None:
         """Initialize the Server class.
 
         Parameters
@@ -93,6 +95,10 @@ class Server(object):
             Configure which version of the data API should be queried (e.g. v1)
             It is recommended to set the version explicitly to prevent
             potential future breaking changes.
+        timeout : int
+            Duration in seconds to wait for FMS to respond (HTTP timeout).
+            This takes priority over the legacy environment variable
+            "fmrest_timeout".
         """
 
         self.url = url
@@ -104,6 +110,7 @@ class Server(object):
         self.verify_ssl = verify_ssl
         self.auto_relogin = auto_relogin
         self.proxies = proxies
+        self.timeout = timeout
 
         if not api_version:
             warnings.warn('No api_version given. Defaulting to v1.')
@@ -701,6 +708,7 @@ class Server(object):
                            url=file_url,
                            verify=self.verify_ssl,
                            stream=stream,
+                           timeout=self.timeout,
                            proxies=self.proxies)
 
         return (name,
@@ -920,6 +928,7 @@ class Server(object):
                            verify=self.verify_ssl,
                            params=params,
                            proxies=self.proxies,
+                           timeout=self.timeout,
                            **kwargs)
 
         if response.status_code == 502:
