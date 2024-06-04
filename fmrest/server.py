@@ -53,8 +53,9 @@ class Server(object):
         Parameters
         ----------
         url : str
-            Address of the FileMaker Server, e.g. https://my-server.com or https://127.0.0.1
-            Note: Data API must use https.
+            Address of the FileMaker Server, e.g. https://my-server.com or
+            https://127.0.0.1. To connect directly to the internal service via
+            http, you can append the port number: http://127.0.0.1:3000
         user : str
             Username to log into your database
             Note: make sure it belongs to a privilege set that has fmrest extended privileges.
@@ -125,9 +126,9 @@ class Server(object):
             warnings.warn('Turning on type_conversion needs the dateutil module, which '
                           'does not seem to be present on your system.')
 
-        if url[:5] != 'https':
-            raise ValueError('Please make sure to use https, otherwise calls to the Data '
-                             'API will not work.')
+        if url[:5] != 'https' and url[-5:] != ":3000":
+            raise ValueError('Please make sure to use https, otherwise calls '
+                             'to the Data API will not work.')
 
         self._token: Optional[str] = None
         self._last_fm_error: Optional[int] = None
