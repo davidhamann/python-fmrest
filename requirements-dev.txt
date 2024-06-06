@@ -34,7 +34,7 @@ requests==2.22.0
 requests-toolbelt==0.8.0
 simplegeneric==0.8.1
 six==1.11.0
-tornado==4.5.2
+tornado==6.4.1
 tqdm==4.23.4
 traitlets==4.3.2
 twine==1.11.0
