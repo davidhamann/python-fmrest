@@ -1,10 +1,16 @@
 """fmrest constants"""
 import os
 from enum import Enum, unique
-from pkg_resources import get_distribution
 from typing import Dict, Any
 
-__version__ = get_distribution('python-fmrest').version
+PACKAGE_NAME = 'python-fmrest'
+
+try:
+    from importlib.metadata import version  # Python 3.8+
+    __version__ = version(PACKAGE_NAME)
+except ImportError:
+    from pkg_resources import get_distribution  # Python 3.6-3.7
+    __version__ = get_distribution(PACKAGE_NAME).version
 
 PORTAL_PREFIX = 'portal_'
 TIMEOUT = int(os.environ.get('fmrest_timeout', 10))
