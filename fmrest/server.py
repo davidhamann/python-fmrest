@@ -994,7 +994,7 @@ class Server(object):
         if isinstance(type_, str):
             self._headers['Content-Type'] = type_
         elif not type_:
-            self._headers.pop('Content-Type')
+            self._headers.pop('Content-Type', None)
         else:
             raise ValueError
         return self._headers
