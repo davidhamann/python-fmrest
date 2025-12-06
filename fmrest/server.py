@@ -931,6 +931,7 @@ class Server(object):
                            proxies=self.proxies,
                            timeout=self.timeout,
                            **kwargs)
+        self._set_content_type() # reset content type
 
         if response.status_code == 502:
             raise BadGatewayError('Web server responded with a Bad Gateway '
@@ -949,8 +950,6 @@ class Server(object):
         if self.last_error != FMSErrorCode.SUCCESS.value:
             raise FileMakerError(self._last_fm_error,
                                  fms_messages[0].get('message', 'Unkown error'))
-
-        self._set_content_type() # reset content type
 
         return fms_response
 
@@ -994,7 +993,7 @@ class Server(object):
         if isinstance(type_, str):
             self._headers['Content-Type'] = type_
         elif not type_:
-            self._headers.pop('Content-Type')
+            self._headers.pop('Content-Type', None)
         else:
             raise ValueError
         return self._headers
