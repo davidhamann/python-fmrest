@@ -232,7 +232,8 @@ class Server(object):
     def create_record(self, field_data: Dict[str, Any],
                       portals: Optional[Dict[str, Any]] = None,
                       scripts: Optional[Dict[str, List]] = None,
-                      request_layout: Optional[str] = None) -> Optional[int]:
+                      request_layout: Optional[str] = None,
+                      date_format: Optional[str] = None) -> Optional[int]:
         """Creates a new record with given field data and returns new internal record id.
 
         Parameters
@@ -255,12 +256,22 @@ class Server(object):
             the value stored in the Server instance's layout attribute and is
             useful if you have a shared Server instance in a multi-threaded
             program.
+        date_format : str, optional
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
         """
         path = self._get_api_path('record', request_layout)
 
         request_data: Dict = {'fieldData': field_data}
+
         if portals:
             request_data['portalData'] = portals
+
+        if date_format:
+            request_data['dateformats'] = self._date_format_for_keyword(date_format)
 
         # build script param object in FMSDAPI style
         script_params = build_script_params(scripts) if scripts else None
@@ -286,7 +297,8 @@ class Server(object):
     def edit_record(self, record_id: int, field_data: Dict[str, Any],
                     mod_id: Optional[int] = None, portals: Optional[Dict[str, Any]] = None,
                     scripts: Optional[Dict[str, List]] = None,
-                    request_layout: Optional[str] = None) -> bool:
+                    request_layout: Optional[str] = None,
+                    date_format: Optional[str] = None) -> bool:
         """Edits the record with the given record_id and field_data. Return True on success.
 
         Parameters
@@ -318,6 +330,12 @@ class Server(object):
             the value stored in the Server instance's layout attribute and is
             useful if you have a shared Server instance in a multi-threaded
             program.
+        date_format : str, optional
+            The date format. Choices are:
+            'us' for US format MM/DD/YYYY,
+            'file' for file locale format,
+            'iso-8601' for ISO format YYYY-MM-DD.
+            If not specified, the default value is 'us'.
         """
         path = self._get_api_path(
             'record_action', request_layout).format(record_id=record_id)
@@ -328,6 +346,9 @@ class Server(object):
 
         if portals:
             request_data['portalData'] = portals
+
+        if date_format:
+            request_data['dateformats'] = self._date_format_for_keyword(date_format)
 
         # build script param object in FMSDAPI style
         script_params = build_script_params(scripts) if scripts else None
