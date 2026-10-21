@@ -131,6 +131,7 @@ class Server(object):
                              'to the Data API will not work.')
 
         self._token: Optional[str] = None
+        self._relogin_pending: bool = False
         self._last_fm_error: Optional[int] = None
         self._last_script_result: Optional[Dict[str, List]] = None
         self._headers: Dict[str, str] = {}
@@ -173,12 +174,18 @@ class Server(object):
             if not self.auto_relogin:
                 return f(self, *args, **kwargs)
 
+            # a previous re-login failed and left us without a token; retry it
+            # before sending a request that would fail without authorization
+            if self._relogin_pending:
+                self.login()
+
             try:
                 return f(self, *args, **kwargs)
             except FileMakerError:
                 if self.last_error == FMSErrorCode.INVALID_DAPI_TOKEN.value:
                     # got invalid token error; try to get a new token
                     self._token = None
+                    self._relogin_pending = True
                     self.login()
                     # ... now perform original request again
                     return f(self, *args, **kwargs)
@@ -199,6 +206,7 @@ class Server(object):
 
         response = self._call_filemaker('POST', path, data, auth=(self.user, self.password))
         self._token = response.get('token', None)
+        self._relogin_pending = False
 
         return self._token
 

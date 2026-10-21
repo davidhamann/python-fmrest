@@ -160,4 +160,5 @@ class CloudServer(Server):
         self._fmid_token = self._get_cognito_token()
         self._token = self._get_bearer_token()
         self._fmid_token = None  # Reset FMID token so auth headers are set appropriately for data api calls
+        self._relogin_pending = False
         return self._token
